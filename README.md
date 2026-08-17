@@ -5,19 +5,23 @@ Windows tuning utility for Blackwell GPUs.
 ## Download
 
 Download the latest `mVolt+.exe` from [GitHub Releases](../../releases/latest) 
-or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.32/mVolt+.exe)
+or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.33/mVolt+.exe)
 
-Current release: **0.32**
+Current release: **0.33**
 
 ## Features
 
 - NVVDD/MSVDD minimum and maximum voltage control
-- XBAR clock control
-- Core and memory clock offsets, power limit and Voltage Boost
+- XBAR clock control and adjustable GPC-to-XBAR propagation ratio
+- Core, memory, SYS and video clock offsets
+- Power limit and Voltage Boost
+- Linked and per-fan control with live RPM monitoring
 - V/F curve editing with regional offsets and flattening
-- Named tuning profiles with full-setting restore and optional automatic
-  application at Windows logon
-- Live rail, ADC and P-state telemetry
+- Named tuning profiles for every control, with full-setting restore and
+  optional automatic application at Windows logon
+- Multi-GPU selection with per-GPU profiles and startup settings
+- Live clock, rail, ADC, power and P-state telemetry in separate tabs
+- Command-line status, tuning and profile application
 
 ## Compatibility
 
@@ -26,6 +30,8 @@ Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
 ## Screenshots
 
 ![mVolt+ dashboard](assets/mvolt-dashboard.png)
+
+![mVolt+ telemetry](assets/mvolt-telemetry.png)
 
 ![mVolt+ V/F curve editor](assets/mvolt-vf-curve-editor.png)
 
