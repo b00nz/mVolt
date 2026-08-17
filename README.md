@@ -29,13 +29,17 @@ Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
 
 ## Screenshots
 
-![mVolt+ dashboard](assets/mvolt-dashboard.png)
+<img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-dashboard.png"
+     alt="mVolt+ dashboard">
 
-![mVolt+ telemetry](assets/mvolt-telemetry.png)
+<img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-telemetry.png"
+     alt="mVolt+ telemetry">
 
-![mVolt+ V/F curve editor](assets/mvolt-vf-curve-editor.png)
+<img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-vf-curve-editor.png"
+     alt="mVolt+ V/F curve editor">
 
-![mVolt+ profile manager](assets/mvolt-profiles.png)
+<img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-profiles.png"
+     alt="mVolt+ profile manager">
 
 Administrator privileges are required. Hardware support varies by GPU,
 driver, and VBIOS. GPU tuning can cause crashes or hardware damage; use it
