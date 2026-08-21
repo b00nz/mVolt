@@ -4,10 +4,10 @@ Windows tuning utility for Blackwell GPUs.
 
 ## Download
 
-Download the latest `mVolt+.exe` from [GitHub Releases](https://github.com/b00nz/mVolt/releases/tag/v0.35)
-or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.35/mVolt+.exe)
+Download the latest `mVolt+.exe` from [GitHub Releases](https://github.com/b00nz/mVolt/releases/tag/v0.36)
+or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.36/mVolt+.exe)
 
-Current release: **0.35**
+Current release: **0.36**
 
 ## Features
 
@@ -15,14 +15,21 @@ Current release: **0.35**
 - XBAR clock control and an adjustable MSVDD clock ratio affecting XBAR, SYS,
   and video clocks
 - Core, memory, SYS and video clock offsets
+- Core, XBAR, SYS and Video voltage offsets
+- Core and Memory channel power limits in watts, using the range the VBIOS
+  reports
+- GPU clock range through NVML locked clocks
 - Power limit and Voltage Boost
 - Linked and per-fan control with live RPM monitoring
 - V/F curve editing with regional offsets and flattening
-- Named tuning profiles for every control, with full-setting restore and
-  optional automatic application at Windows logon
+- Named tuning profiles for every control, applied on demand or automatically
+  at Windows logon; a control a profile does not enable is left untouched
 - Multi-GPU selection with per-GPU profiles and startup settings
 - Live clock, rail, ADC, power and P-state telemetry in separate tabs
-- Command-line status, tuning and profile application
+- Profile and CLI support; `--status` reports the driver's own minimum and
+  maximum for every control that has one
+- Adjustable poll interval, polling pause while hidden, and 50-200% interface
+  zoom
 
 ## Dashboard controls
 
@@ -41,6 +48,9 @@ Moving a slider only changes its pending target. **Enable** arms the control,
 | SYS Clock Offset | Adds an offset to the GPU's internal system clock domain. |
 | Voltage Boost | Sets NVIDIA's Voltage Boost percentage; it does not directly set a rail voltage. |
 | Video Clock Offset | Adds an offset to the driver-exposed video clock domain. |
+| Core / XBAR / SYS / Video Voltage Offset | Shifts how much voltage one domain asks for at a given frequency; negative allows a higher clock. |
+| Core / Memory Power Limit | Sets an absolute watt limit on the core/graphics or memory/HBM power channel. |
+| GPU Clock Range | Sets an absolute minimum and maximum core clock; **Default** releases the lock. |
 | Fan Control | The linked slider sets every fan; the per-fan sliders set individual channels, and **Auto** returns control to firmware. |
 
 **MSVDD Clock Ratio example:** The nominal relationship is approximately
@@ -51,6 +61,13 @@ Boost; it does not force any domain to run at that exact frequency. Actual
 clocks can remain lower because each domain still follows its own V/F curve,
 offset, hardware limit, and workload-dependent boost behavior.
 
+**When mVolt+ closes**, everything you applied stays on the card until you
+change it or reboot. Only the fans return to automatic, because a fixed duty
+with no program behind it stops responding to temperature.
+
+**Options > Extend voltage offsets** opens the wider voltage-offset window for
+anyone who wants to go past the measured-safe default.
+
 ## Compatibility
 
 Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
@@ -59,7 +76,7 @@ Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
 
 <picture>
   <img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-dashboard.png"
-       alt="mVolt+ 0.34 dashboard">
+       alt="mVolt+ 0.36 dashboard">
 </picture>
 
 <picture>
