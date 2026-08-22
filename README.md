@@ -4,10 +4,10 @@ Windows tuning utility for Blackwell GPUs.
 
 ## Download
 
-Download the latest `mVolt+.exe` from [GitHub Releases](https://github.com/b00nz/mVolt/releases/tag/v0.37)
-or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.37/mVolt+.exe)
+Download the latest `mVolt+.exe` from [GitHub Releases](https://github.com/b00nz/mVolt/releases/tag/v0.36)
+or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.36/mVolt+.exe)
 
-Current release: **0.37**
+Current release: **0.36**
 
 ## Features
 
