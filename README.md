@@ -8,8 +8,8 @@ It ships as a single native executable with no installer.
 
 ## Download
 
-- [mVolt+ v0.37 release](https://github.com/b00nz/mVolt/releases/tag/v0.37)
-- [Download mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.37/mVolt+.exe)
+- [mVolt+ v0.38 release](https://github.com/b00nz/mVolt/releases/tag/v0.38)
+- [Download mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.38/mVolt+.exe)
 
 Administrator privileges are required for tuning.
 
@@ -43,9 +43,6 @@ Only controls supported by the selected GPU and driver are made available.
 Profiles are complete snapshots. Enabled controls use their saved values,
 disabled controls return to their defaults, and controls missing from older
 profiles are left unchanged.
-
-Default-valued settings appear disabled after loading. Hidden tiles are still
-saved and applied.
 
 ## Applied Settings
 
