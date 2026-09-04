@@ -20,7 +20,7 @@ Administrator privileges are required for tuning.
 - V/F curve editing
 - Core, XBAR, SYS, and video voltage-demand offsets
 - Board power limit
-- Core and Memory OCP limits in amps
+- NVVDD and MSVDD OCP limits in amps
 - Voltage Boost, Boost Lock, and GPU clock-range control
 - Linked or individual fan control with live RPM
 - Live voltage, clock, power, P-state, and ADC telemetry
