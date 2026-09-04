@@ -1,84 +1,113 @@
-# mVolt+
+# mVolt+ 0.37
 
-Windows tuning utility for Blackwell GPUs.
+mVolt+ is a lightweight Windows utility for NVIDIA GPU tuning, monitoring,
+and profiles. It is designed primarily for RTX 50 series GPUs and also offers
+experimental support for RTX 40, RTX 30, RTX 20, and GTX 10 series cards.
+
+It ships as a single native executable with no installer.
 
 ## Download
 
-Download the latest `mVolt+.exe` from [GitHub Releases](https://github.com/b00nz/mVolt/releases/tag/v0.37)
-or click here: [mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.37/mVolt+.exe)
+- [mVolt+ v0.37 release](https://github.com/b00nz/mVolt/releases/tag/v0.37)
+- [Download mVolt+.exe](https://github.com/b00nz/mVolt/releases/download/v0.37/mVolt+.exe)
 
-Current release: **0.37**
+Administrator privileges are required for tuning.
 
 ## Features
 
-- NVVDD and MSVDD minimum and maximum voltage control
-- Core, XBAR, SYS and Video voltage offsets
-- Core, Memory, SYS and Video clock offsets
-- XBAR clock control with an adjustable MSVDD clock ratio that moves the XBAR,
-  SYS and Video ceilings together
-- Core and Memory channel power limits in watts, bounded by the range the
-  vBIOS reports and held at the firmware default until unlocked in Options
-- Board power limit and Voltage Boost
-- GPU clock range through NVML locked clocks
-- Linked and per-fan control with live RPM readback
-- V/F curve editing with regional offsets and flattening
-- Named tuning profiles covering every control, applied on demand or at
-  Windows logon; a control the profile does not enable is left untouched
-- Multi-GPU selection, with profiles and startup settings kept per adapter
-- Live clock, rail, ADC, power and P-state telemetry in separate tabs
-- Command line for every tuning control and for applying a profile by name;
-  `--status` reports the driver's own minimum and maximum for each control
-  that has one
-- Adjustable poll interval, polling pause while hidden, and 50-200% interface
-  zoom
+- NVVDD and MSVDD voltage-range control
+- Core, memory, XBAR, SYS, and video clock offsets
+- V/F curve editing
+- Core, XBAR, SYS, and video voltage-demand offsets
+- Board power limit
+- Core and Memory OCP limits in amps
+- Voltage Boost, Boost Lock, and GPU clock-range control
+- Linked or individual fan control with live RPM
+- Live voltage, clock, power, P-state, and ADC telemetry
+- Optional RTSS overlay output for rail and clock readings
+- Compact Applied Settings summary with driver and VBIOS information
+- Multi-GPU support
+- Hideable tiles, scrolling, and adjustable interface scaling
 
-## Dashboard controls
+Only controls supported by the selected GPU and driver are made available.
 
-Moving a slider only changes its pending target. **Enable** arms the control,
-**Apply** writes it, and **Default** restores the driver-reported default.
+## Profiles and automation
 
-| Control | What it does |
-|---|---|
-| Core / NVVDD Voltage Range | Sets the core rail's minimum voltage with the left handle and maximum voltage with the right handle; it does not lock a constant voltage. |
-| MSVDD Voltage Range | Sets the separate MSVDD rail's minimum and maximum voltage limits. |
-| MSVDD Clock Ratio | Adjusts the MSVDD-domain clock ceiling relative to the core clock, affecting XBAR, SYS, and Video clocks; each still follows its own V/F curve and clock limits. |
-| Core Clock Offset | Adds a global core-clock offset that stacks with regional V/F point offsets. |
-| Memory Clock Offset | Adds an offset to the driver-exposed VRAM clock. |
-| XBAR Clock Offset | Adds an offset to the GPU crossbar/interconnect clock. |
-| Power Limit | Sets the board-power ceiling as a percentage of the firmware default. |
-| SYS Clock Offset | Adds an offset to the GPU's internal system clock domain. |
-| Voltage Boost | Sets NVIDIA's Voltage Boost percentage; it does not directly set a rail voltage. |
-| Video Clock Offset | Adds an offset to the driver-exposed video clock domain. |
-| Core / XBAR / SYS / Video Voltage Offset | Shifts how much voltage one domain asks for at a given frequency; negative allows a higher clock. |
-| Core / Memory Power Limit | Sets an absolute watt limit on the core/graphics or memory/HBM power channel. Limited to the firmware default unless unlocked in Options. |
-| GPU Clock Range | Sets an absolute minimum and maximum core clock; **Default** releases the lock. |
-| Fan Control | The linked slider sets every fan; the per-fan sliders set individual channels, and **Auto** returns control to firmware. |
+- Save and load complete tuning profiles
+- Apply a profile immediately or load it as pending settings
+- Assign global hotkeys to profiles
+- Apply a selected profile automatically at Windows logon
+- Minimize or close mVolt+ to the system tray
+- Keep separate profiles for each GPU and VBIOS
 
-**MSVDD Clock Ratio example:** The nominal relationship is approximately
-`clock ceiling = core clock x ratio`. With the core at 3000 MHz, `0.90`
-corresponds to a 2700 MHz ceiling for XBAR, SYS, and Video clocks, while `1.20`
-corresponds to 3600 MHz. The ceiling moves as the core clock changes with GPU
-Boost; it does not force any domain to run at that exact frequency. Actual
-clocks can remain lower because each domain still follows its own V/F curve,
-offset, hardware limit, and workload-dependent boost behavior.
+Profiles are complete snapshots. Enabled controls use their saved values,
+disabled controls return to their defaults, and controls missing from older
+profiles are left unchanged.
 
-**When mVolt+ closes**, everything you applied stays on the card until you
-change it or reboot. Only the fans return to automatic, because a fixed duty
-with no program behind it stops responding to temperature.
+Default-valued settings appear disabled after loading. Hidden tiles are still
+saved and applied.
 
-**Options > Extend voltage offsets** opens the wider voltage-offset window for
-anyone who wants to go past the measured-safe default.
+## Applied Settings
 
-**Options > Unlock Core/Memory power limits** raises the ceiling on the two
-channel power sliders from the firmware default to the full range the vBIOS
-reports. It is off by default because those sliders reach 1 W at the bottom.
-Switching it back off returns any limit above the firmware default to the
-default, the same way turning off the XOC range or the extended voltage
-offsets does.
+The **Summary** button opens a compact, always-on-top view of the current
+settings. It includes:
+
+- Clock, voltage, power, OCP, fan, and lock settings
+- Active profile and current time
+- NVIDIA driver and VBIOS versions
+- A copyable text summary for benchmark submissions
+
+## Telemetry and RTSS
+
+The telemetry window shows available rail, ADC, power, P-state, fan, and clock
+data. Polling speed can be adjusted or paused while mVolt+ is minimized.
+
+mVolt+ can also publish selected rail and clock readings to the RivaTuner
+Statistics Server overlay. RTSS is optional, and the master switch and all
+individual overlay items are off by default.
 
 ## Compatibility
 
-Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
+- **RTX 50 / Blackwell:** Primary support
+- **RTX 40 / Ada:** Experimental support
+- **RTX 30 / Ampere:** Experimental support
+- **RTX 20 / Turing:** Experimental basic tuning support
+- **GTX 10 / Pascal:** Experimental basic tuning support
+
+Available controls vary by card, firmware, and driver. Unsupported features
+remain hidden or disabled instead of using unverified write paths.
+
+Primary testing has been performed on GeForce RTX 5090, RTX 5080, and
+RTX 5070 Ti hardware.
+
+## Safety and persistence
+
+- Opening mVolt+ and moving controls do not change GPU settings
+- Changes are written only when **Apply**, **Default**, or **Auto** is used
+- Values are checked against the ranges reported by the driver
+- Writes are verified and failed multi-step changes attempt to roll back
+- Unsupported controls fail closed
+- Compatibility reports are encrypted and collect read-only driver data
+
+> **Settings are not reverted when mVolt+ closes.** Applied voltage, clock,
+> power, OCP, V/F, lock, and fan settings remain active until they are changed,
+> reset, or cleared by the driver or a reboot. Use **Default** or **Auto** when
+> you want to return a control to stock behavior.
+
+GPU tuning can cause instability, driver resets, data loss, or hardware
+damage. Use conservative values and proceed at your own risk.
+
+## Command line
+
+mVolt+ provides read-only status, GPU listing, compatibility reporting,
+profile loading, and direct tuning options from the command line.
+
+```powershell
+.\mVolt+.exe --help
+.\mVolt+.exe --list-gpus
+.\mVolt+.exe --status
+.\mVolt+.exe --diagnostic
+```
 
 ## Screenshots
 
@@ -99,16 +128,23 @@ Tested on GeForce RTX 5090, RTX 5080, and RTX 5070 Ti.
 
 <picture>
   <img src="https://raw.githubusercontent.com/b00nz/mVolt/main/assets/mvolt-profiles.png"
-       alt="mVolt+ profile manager">
+       alt="mVolt+ profile manager and RTSS options">
 </picture>
 
-Administrator privileges are required. Hardware support varies by GPU,
-driver, and vBIOS. GPU tuning can cause crashes or hardware damage; use it
-at your own risk.
+## Requirements
 
-mVolt+ is not affiliated with or endorsed by any GPU manufacturer.
+- 64-bit Windows
+- NVIDIA display driver
+- Administrator privileges for tuning
+- NVML support for GPU Clock Range
+- RTSS only when overlay output is wanted
+
+mVolt+ is an independent third-party project. It is not affiliated with,
+sponsored by, approved by, or endorsed by NVIDIA Corporation. NVIDIA,
+GeForce, RTX, and related product names are trademarks of their respective
+owners and are used only to describe compatibility.
 
 ## Credits
 
 - [Loong0x00](https://github.com/Loong0x00) for discovering the XBAR clock
-  control.
+  control
