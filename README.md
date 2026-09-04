@@ -1,4 +1,4 @@
-# mVolt+ 0.37
+# mVolt+
 
 mVolt+ is a lightweight Windows utility for NVIDIA GPU tuning, monitoring,
 and profiles. It is designed primarily for RTX 50 series GPUs and also offers
@@ -84,10 +84,6 @@ RTX 5070 Ti hardware.
 
 - Opening mVolt+ and moving controls do not change GPU settings
 - Changes are written only when **Apply**, **Default**, or **Auto** is used
-- Values are checked against the ranges reported by the driver
-- Writes are verified and failed multi-step changes attempt to roll back
-- Unsupported controls fail closed
-- Compatibility reports are encrypted and collect read-only driver data
 
 > **Settings are not reverted when mVolt+ closes.** Applied voltage, clock,
 > power, OCP, V/F, lock, and fan settings remain active until they are changed,
