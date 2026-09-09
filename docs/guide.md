@@ -2,14 +2,9 @@
 
 **For v0.39** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
 
-mVolt+ changes the requests and limits the NVIDIA driver uses to operate your
-GPU. It also shows what the driver reports and what available sensors measure.
-A requested clock, an evaluated voltage limit and a measured voltage describe
-different things; this guide explains how to read them together.
-
-Expand a control below to see what it does, what changing it affects, and what
-can limit the result. Screenshots illustrate the interface, not a tuning preset.
-They show the live v0.39 app running on an RTX 5090.
+This guide covers dashboard controls, profiles, monitoring and startup. Expand
+a section for details. Screenshots show v0.39 on an RTX 5090; the values shown
+are not recommended tuning settings.
 
 ## Find your way
 
@@ -53,13 +48,13 @@ The profile selector shows the recognized saved profile or **Custom**.
 | **Reset** | Immediately restores that card's default and updates its targets |
 | **Reset all** | Immediately restores defaults for all supported controls, including hidden and disabled tiles |
 
-**Switches control participation, not stock status.** A disabled tile can show a
-non-default applied value. Turning it off does not undo previous tuning or reset
-a value written by another application. Use Reset when you want to reset it.
+**Disabling a tile excludes it from Apply and recovery; it does not reset it.**
+Its applied value can still reflect tuning from mVolt+ or another application.
+Use Reset to restore that setting's default.
 
 Slider, stepper and text edits are pending until Apply. A card-specific Apply
-acts on that card; **Apply fans** acts on the fan tile. Other dashboard drafts
-remain pending. Reset is immediate and needs no second Apply.
+acts on that card; **Apply fans** acts on the fan tile. Other edits remain pending.
+Reset is immediate and needs no second Apply.
 
 **Boost lock**, applying a saved profile and Reset actions are immediate.
 Selecting a profile in the Profile Manager list only previews it, while selecting
@@ -107,9 +102,8 @@ Changes the voltage demand for the core clock domain. Positive values ask for
 more voltage; negative values ask for less. Another domain sharing the rail or
 an active voltage limit may still determine the voltage actually supplied.
 
-This is separate from the **Core voltage limits** card. A voltage request can
-change without producing the same change in measured voltage. Reset clears
-the demand offset.
+This is separate from the **Core voltage limits** card. Reset clears the demand
+offset.
 
 </details>
 
@@ -150,22 +144,20 @@ current or the board's power budget.
 
 The ordinary range is capped at the firmware default where available. **OCP
 unlock** exposes the extended supported range. Reset returns this channel to
-its firmware default. The OCP tile in Fabric controls a different rail.
+its firmware default.
 
 </details>
 
 ### MSVDD / Fabric
 
-MSVDD supplies the fabric side of the GPU. These controls are separate from the
-VRAM clock offset in Memory. The MSVDD OCP setting is a fabric-rail current limit,
-not a memory-clock control.
+MSVDD supplies the GPU fabric. Its voltage and current controls are separate
+from VRAM tuning in the Memory section.
 
 <details>
 <summary><strong>MSVDD voltage limits</strong> — fabric-rail voltage-policy offsets</summary>
 
-Adjusts VMIN, REL, ALT and supported OV offsets for MSVDD. Their meaning and
-linked-edit behavior match the core rail card, but they affect the fabric
-rail's own policy and use that rail's reported limits.
+Adjusts VMIN, REL, ALT and supported OV offsets for the MSVDD fabric rail,
+using its own reported limits. Linked editing works as on the core rail card.
 
 Changing fabric voltage limits can constrain fabric clocks; core/fabric clock
 propagation and other limits can influence the result. This card does not directly
@@ -214,12 +206,10 @@ Reset clears the demand offset.
 <details>
 <summary><strong>SYS clock offset</strong> — system-domain frequency</summary>
 
-Shifts the clock request for the GPU system domain. Positive values request a
-higher frequency and negative values a lower one. Workload, driver clock steps
-and voltage/power limits determine the measured result.
-
-A requested offset may be normalized to a nearby supported clock step. Read
-**Applied** and **Live** separately; Reset clears the offset.
+Shifts the GPU system clock request. Positive values request a higher frequency;
+negative values request a lower one. The driver may round the offset to a
+supported clock step, while workload and voltage/power limits affect measured
+speed. Compare **Applied** with **Live**; Reset clears the offset.
 
 </details>
 
@@ -230,8 +220,7 @@ Changes the voltage demand for the GPU video domain. Positive values ask for
 more voltage; negative values ask for less. Shared rail demands and active
 voltage limits can restrict the resulting voltage.
 
-It does not change video quality or choose an encoder preset. Reset clears this
-domain's voltage-demand offset.
+Reset clears this domain's voltage-demand offset.
 
 </details>
 
@@ -242,7 +231,7 @@ Shifts the clock request for the GPU video domain. Positive values request a
 higher frequency and negative values a lower one. Whether this changes measured
 speed or workload performance depends on the active task and other GPU limits.
 
-It does not force constant video-engine activity. Reset clears the offset.
+Reset clears the offset.
 
 </details>
 
@@ -251,7 +240,7 @@ It does not force constant video-engine activity. Reset clears the offset.
 
 Sets the output-current limit for the MSVDD fabric rail. Lower values can
 constrain fabric boost sooner; higher values permit more current within other
-active limits. It is a protection threshold, not measured current or a VRAM offset.
+active limits. It is a protection threshold, not measured current.
 
 **OCP unlock** expands the editable range beyond the firmware default where
 supported. Reset restores this rail's firmware current limit.
@@ -494,8 +483,7 @@ This reduces repeated speed changes near a boundary. A larger value holds higher
 duty longer; a smaller value lets the curve reduce duty sooner. Rising temperature
 can still increase duty immediately.
 
-The default is **3 °C**, and you can adjust it. This controls cooling response;
-it is not a claim about temperature-sensor accuracy.
+The default is **3 °C**, and you can adjust it.
 
 </details>
 
@@ -508,7 +496,7 @@ readback tells you what is currently applied.
 
 Profiles store configuration for the selected physical GPU and VBIOS. They
 record values and which controls were enabled when saved. Current dashboard
-switches do not override a profile's saved participation when it is loaded.
+switches do not override those saved choices when the profile is loaded.
 
 ### Normal profiles and full snapshots
 
@@ -520,9 +508,8 @@ switches do not override a profile's saved participation when it is loaded.
 
 **Normal is the default.** Select **Full snapshot (include disabled settings)**
 when saving if you want to restore captured disabled controls too. Disabled
-controls are captured from applied readback; enabled controls use dashboard
-targets, including pending edits. A snapshot therefore need not represent only
-already-applied hardware settings.
+controls are captured from GPU readback; enabled controls use dashboard targets,
+including pending edits.
 
 A snapshot can restore a stock board-power limit even if that tile was disabled
 at capture, provided that stock limit was actually read then. Disabling a tile
@@ -533,19 +520,18 @@ is not evidence that its value is stock.
 | Profile Manager action | What it does |
 | --- | --- |
 | Select a profile in the list | Shows its saved values without applying |
-| Save current settings as… | Captures a preview and opens the Save profile flow |
+| Save current settings as… | Captures the settings and opens Save profile |
 | Save profile | Stores the captured configuration; does not write to the GPU |
 | Overwrite selected | Replaces the selected profile with current dashboard configuration |
-| Differences from applied… | Compares participating saved settings with current readback |
+| Differences from applied… | Compares the settings the profile would apply with current GPU values |
 | Apply profile | Immediately applies the saved configuration |
 | Load for editing | Stages its targets and switches on the dashboard |
 | Restore backup | Restores the saved profile document backup without applying it |
 | Delete | Removes the selected profile after confirmation; applied settings stay in place |
 
-The header profile menu applies immediately. The Profile Manager list only selects
-a preview. After a successful apply, the profile name can be recognized on the
-next launch if readback still matches; mVolt+ need not reapply it to display the
-name. **Custom** means no saved profile is currently identified as active.
+The header profile menu applies immediately. After an apply, mVolt+ can recognize
+the profile on the next launch if readback still matches, without applying it
+again. **Custom** means no saved profile is currently identified as active.
 
 Stored V/F edits are part of the saved configuration. Fan curves use their
 applied/pending mode separately from duty that changes during monitoring.
@@ -556,44 +542,24 @@ Loading a normal profile with fan control disabled leaves a running fan curve al
 Click **Global profile shortcut** and press a combination with Ctrl, Alt, Shift
 or Win. Save it with the profile. Backspace or Delete clears the shortcut.
 Shortcuts work while mVolt+ runs, including in the tray, and apply the same saved
-configuration as **Apply profile**. Conflicts with another application's shortcut
-are shown beside the field. A fully exited app cannot respond to shortcuts.
+configuration as **Apply profile**. Shortcut conflicts are shown beside the field.
 
 ## Upgrading old profiles
 
-v0.39 reads the supported earlier profile formats. Legacy VBIOS-only files can
-be migrated to the per-adapter location. **Readable does not always mean ready
-for immediate application.**
+v0.39 can read supported older profiles. Profiles with **enabled old NVVDD/MSVDD
+voltage ranges** cannot be applied, including at logon, until updated. Choose
+**Load for editing**, review and adjust VMIN/REL/ALT/OV, then save the profile
+again. The editor starts from **current driver offsets**; old absolute voltage
+targets are not converted automatically because the driver's baselines can change.
 
-| Existing profile content | v0.39 behavior |
-| --- | --- |
-| Supported clock, power, OCP, fan and other current controls | Retained, then validated against current GPU capabilities/ranges |
-| Enabled old absolute NVVDD/MSVDD range | Apply, startup and recovery refuse that legacy rail request until reviewed |
-| Disabled old rail in a normal profile | Left untouched on Apply |
-| Saved-disabled controls | Left untouched in normal mode; no automatic reset-to-stock behavior |
-| Controls absent from an older file | Remain absent and untouched |
-| Older file without full-snapshot mode | Remains a normal profile |
+Disabled rails in a normal profile do not need this conversion. Saved-disabled
+and absent controls stay untouched, and older profiles remain in normal mode
+unless you explicitly choose Full snapshot. Check the saved Enabled/Disabled
+switches before applying.
 
-### Migration sequence
-
-1. With the app closed, copy `%LOCALAPPDATA%\mVolt+` somewhere safe. Keep the
-   original if you may return to v0.38; newly saved v0.39 files are not a promise
-   of backward compatibility with an older executable.
-2. Open v0.39 and select the correct GPU and VBIOS profile set.
-3. In Profiles, select the old profile and choose **Load for editing**.
-4. For legacy rail ranges, mVolt+ seeds the controls from **current driver
-   offsets**, not a conversion of the old absolute targets. Review VMIN/REL/ALT/OV
-   and set your intended values.
-5. Check every Enabled/Disabled choice. Old files retain the flags they actually
-   contain; a build that did not record your intended switch choice cannot
-   reconstruct it from a zero or nonzero value.
-6. Use **Save current settings as…** to save a new profile, or overwrite after
-   preserving the original. Choose Full snapshot only if you want that behavior.
-7. Apply the reviewed profile manually and verify it before enabling logon application.
-
-Driver baselines move with operating conditions. Translating an old absolute
-target into an offset using today's baseline would imply accuracy that the file
-cannot provide. This is why rail migration requires review.
+If you might return to v0.38, close the app and keep a copy of
+`%LOCALAPPDATA%\mVolt+` before saving updated profiles. Verify an updated profile
+manually before selecting it for logon application.
 
 OV can also become unavailable after a GPU or driver change. **Load for editing**
 excludes unsupported OV and shows a notice, leaving the original saved profile
@@ -602,14 +568,14 @@ remaining controls; automatic application of the unsupported request is refused.
 
 ## Startup and tray
 
-**Apply selected profile at logon** chooses a profile for application when you
-sign in. **Start in tray at Windows logon** controls resident startup. A startup
-profile needing resident fan ownership also keeps mVolt+ in the tray.
+**Apply selected profile at logon** applies a profile when you sign in.
+**Start in tray at Windows logon** keeps mVolt+ running in the notification area.
+A startup profile that needs background fan control also keeps the app in the tray.
 
-Startup has no fixed 20-second delay. mVolt+ waits up to 60 seconds for the
-NVIDIA display service when present/enabled and stable readbacks from the selected
-GPU and required controls. The NVIDIA Control Panel window does not need to be
-open. An unready driver times out without applying.
+mVolt+ waits up to 60 seconds for the NVIDIA display service, if enabled, and
+stable readings from the selected GPU and required controls. The NVIDIA Control
+Panel window does not need to be open. If the checks fail, startup exits without
+applying.
 
 | Preference or action | Behavior |
 | --- | --- |
@@ -619,16 +585,14 @@ open. An unready driver times out without applying.
 | Tray → Exit | Fully closes the app; applied settings are not reverted |
 | Disable both logon options | Stops configured automatic launching for this GPU |
 
-The logon task uses an elevated copy under `%ProgramFiles%\mVolt+`, scoped to
-the user and adapter. A normal elevated launch refreshes an existing configured
-task and executable. Resident tasks have no execution time limit; one-shot
-startup application is bounded.
+The logon task runs a separate copy under `%ProgramFiles%\mVolt+` with administrator
+privileges, configured for your Windows user and GPU. Opening mVolt+ as administrator
+updates an existing startup task and its executable.
 
-Recovery uses applied settings and participation, leaving pending edits alone.
-The required driver interfaces must become available again; recovery cannot
-guarantee restoration after every external driver reset. An incomplete startup
-attempt can block further automatic writes. Review the profile and re-enable
-startup explicitly after resolving the cause.
+Recovery uses previously applied values for enabled controls, leaving pending
+edits alone. It depends on the required driver interfaces becoming available
+again. An incomplete startup attempt can block further automatic writes; resolve
+the cause, review the profile and re-enable startup.
 
 ## Telemetry
 
@@ -697,8 +661,7 @@ configuration, not instantaneous measured clocks; use Clocks for live measuremen
 
 Shows current GPU temperature, absolute GPU hotspot temperature and memory-junction
 temperature where available. Hotspot is an absolute sensor temperature, not
-hotspot minus GPU temperature. These readings do not provide a temperature-target
-tuning slider.
+hotspot minus GPU temperature.
 
 The direct hotspot implementation is currently validated for the desktop RTX 5090
 with driver 616.64. Other supported tuning features do not imply that this sensor
@@ -754,7 +717,7 @@ the GPU, recognized profile and VBIOS.
 
 **Copy summary** copies current applied/readback settings. **Always on top** keeps
 the window above other applications. Pending dashboard targets are not presented
-as applied. Overview is a compact reference surface, not another tuning form.
+as applied.
 
 ## Settings and layout
 
@@ -782,7 +745,7 @@ needs it. **Toolbar polling button** controls whether the shortcut button is sho
 To use RTSS, run RivaTuner Statistics Server, enable **Show telemetry in the RTSS
 overlay**, and select the metadata/rail/clock lines you want. RTSS must display
 its overlay in the target application. The master option and individual lines
-are off by default. This is not a built-in FPS measurement feature.
+are off by default.
 
 ### Appearance and dashboard organization
 
@@ -793,7 +756,7 @@ colors. Changes update the app's windows and are saved for the selected GPU.
 Click a section heading to collapse or expand it. Use **Sections** to jump to
 sections and manage tiles. Pinning moves a card to Quick tuning; hiding removes
 it from view. **Hiding, collapsing and pinning do not change whether a setting
-is applied or stored in a profile.** A hidden enabled card still participates.
+is applied or stored in a profile.** Apply still includes hidden enabled cards.
 
 ## Advanced tuning
 
@@ -802,7 +765,7 @@ that higher values are appropriate for your hardware.
 
 | Option | What enabling it changes | What disabling it can do |
 | --- | --- | --- |
-| **Extended offsets** | Expands per-domain voltage-demand editing from the ordinary −25…+50 mV window to the extended range | Caps out-of-range applied demands and pending targets back to the ordinary range through a transaction |
+| **Extended offsets** | Expands per-domain voltage-demand editing beyond the ordinary −25…+50 mV range | Brings out-of-range applied values and pending targets back within the ordinary range |
 | **OCP unlock** | Allows output-current targets above the firmware default within the supported driver range | Restores above-default applied OCP limits to their defaults before closing the range |
 | **XOC range** | Uses each rail's reported voltage-device maximum as the mode ceiling; without valid metadata, uses a 1.25 V fallback | Can apply a standard-mode cap to rails above the ordinary ceiling |
 
@@ -898,7 +861,7 @@ selected GPU:
 
 Normal/full-snapshot behavior follows the saved profile. A one-shot CLI profile
 can apply fixed fan duty or firmware auto, but refuses an active software fan
-curve because it needs a resident process. Use the GUI/tray and configured logon
+curve because it needs mVolt+ to keep running. Use the GUI/tray and configured logon
 behavior for software curves. `--diagnostic` creates a local compatibility report.
 
 ## Files and logging
@@ -925,79 +888,72 @@ installs the protected startup copy described above.
 <details>
 <summary><strong>The slider moves, but the GPU does not change</strong></summary>
 
-Check whether the tile is Enabled and whether **Target** differs from **Applied**.
-Moving a slider stages an edit. Apply it, then inspect readback and the relevant
-live reading. A retained target can still be constrained by workload, power,
-temperature, voltage limits or driver clock steps.
+Enable the tile, apply the edit, then compare **Target**, **Applied** and **Live**.
+Workload and GPU limits can still restrict the result.
+See [How the dashboard works](#how-the-dashboard-works).
 
 </details>
 
 <details>
 <summary><strong>A disabled tile still shows a non-default applied value</strong></summary>
 
-Disabling stops the tile participating in Apply and recovery. It does not reset
-a setting previously applied by mVolt+ or another tool. Use that card's Reset to
-restore its default immediately. A normal saved profile with the tile disabled
-also leaves its current value alone.
+Disabling excludes the tile from Apply and recovery but leaves its applied value
+in place. Use Reset to restore its default immediately.
+See [How the dashboard works](#how-the-dashboard-works).
 
 </details>
 
 <details>
 <summary><strong>REL and ALT changed, but measured voltage did not</strong></summary>
 
-Inspect **Current effective maximum** and the other evaluated limits. A tighter
-OV or another applicable policy can constrain the result. If MAX changed, the
-workload may not need more voltage. Compare the same physical sensor under
-comparable load; a voltage policy is not a measured rail value.
+Check **Current effective maximum**. Another limit may still constrain it; even
+if MAX rises, the workload may not need more voltage.
+See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage).
 
 </details>
 
 <details>
 <summary><strong>The rail editor refuses a target that fitted earlier</strong></summary>
 
-The driver baseline can move, especially after Voltage Boost or operating-state
-changes. Apply validates against fresh readback. Review evaluated limits and
-the active mode/device ceiling; an earlier editing range is not a promise that
-the same request remains valid later.
+Driver baselines can change after Voltage Boost or operating-state changes.
+Apply checks fresh readings, so a previously valid target may exceed the current
+ceiling. Review the rail readouts and [Advanced tuning](#advanced-tuning).
 
 </details>
 
 <details>
 <summary><strong>An old profile will not apply, or no longer resets a disabled control</strong></summary>
 
-Enabled legacy absolute rail ranges need review and resaving. Normal profiles
-now leave saved-disabled controls untouched; use an explicitly captured full
-snapshot to restore those values too. Follow the [migration sequence](#upgrading-old-profiles)
-and check saved switches before re-enabling automatic application.
+Enabled legacy voltage ranges need review and resaving; follow the
+[profile upgrade instructions](#upgrading-old-profiles). Normal profiles leave
+saved-disabled controls untouched. Use a [full snapshot](#normal-profiles-and-full-snapshots)
+to restore their captured values too.
 
 </details>
 
 <details>
 <summary><strong>The profile selector says Custom after reopening</strong></summary>
 
-mVolt+ identifies a profile when the relevant readback and saved participation
-match. Another tuning tool, a driver reset, changed controls or an ambiguous
-match can leave it as Custom. Check Overview against the profile preview.
-The name alone is not an instruction to reapply or proof that nothing is tuned.
+mVolt+ could not identify a matching saved profile; tuning may still be applied.
+Compare Overview with the profile preview. See [Profiles](#profiles).
 
 </details>
 
 <details>
 <summary><strong>Fans stop following temperature after Exit</strong></summary>
 
-The custom curve runs in mVolt+, not GPU firmware. Keep the app in the tray for
-temperature tracking. After a full exit, the last duty remains fixed. Use
-**Reset to auto** before exiting if you want firmware-managed temperature response.
+Keep mVolt+ in the tray for the curve to track temperature. Fully exiting leaves
+the last duty fixed; **Reset to auto** returns control to firmware.
+See [Fan control and persistence](#fan-control-and-persistence).
 
 </details>
 
 <details>
 <summary><strong>Startup is delayed or the profile does not load</strong></summary>
 
-Check the logon profile, saved control support and bounded startup log. Startup
-waits for NVIDIA service/GPU readiness, not an open Control Panel window. Legacy
-voltage ranges, an unsupported saved control or an incomplete previous attempt
-can prevent application. Review the profile manually before re-enabling startup.
+Check the startup log and selected logon profile. Legacy voltage ranges,
+unsupported controls or an incomplete earlier attempt can prevent application.
+See [Startup and tray](#startup-and-tray) and [Files and logging](#files-and-logging).
 
 </details>
 
@@ -1005,9 +961,8 @@ can prevent application. Review the profile manually before re-enabling startup.
 <summary><strong>A tile or sensor is missing</strong></summary>
 
 Check **Settings → General → Customize tiles…**, collapsed sections and Quick
-tuning pins, then confirm the selected GPU. An unavailable control usually means
-the card or driver did not provide a supported interface. Different models in
-one series can expose different capabilities.
+tuning pins, then confirm the selected GPU. Controls and sensors also depend on
+[GPU and driver support](#compatibility-and-multiple-gpus).
 
 </details>
 
@@ -1020,8 +975,8 @@ rendering issues, include resolution, Windows display scaling, Interface size,
 which window was active and a screenshot.
 
 For profile problems, state normal versus full snapshot and which controls were
-enabled when saved. If requested, generate a local **Debug report…** and share it
-deliberately in your [issue report](https://github.com/b00nz/mVolt/issues).
+enabled when saved. If requested, attach a **Debug report…** to your
+[issue report](https://github.com/b00nz/mVolt/issues).
 
 </details>
 

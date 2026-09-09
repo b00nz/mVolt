@@ -1,11 +1,11 @@
 # mVolt+
 
-**NVIDIA GPU tuning, monitoring and profiles — in one native Windows executable.**
+mVolt+ is a Windows tool for NVIDIA GPU tuning and monitoring. It supports
+voltage-limit and clock offsets, power limits, V/F and fan curves, and saved
+profiles.
 
-mVolt+ brings core and fabric voltage controls, clock offsets, curve editing,
-power limits and detailed telemetry into one dashboard. RTX 50 series is the
-primary target; selected controls are also available experimentally on earlier
-GeForce generations. Availability depends on the GPU, VBIOS and driver.
+It primarily targets RTX 50 series GPUs. Support for earlier GeForce generations
+is experimental; available controls depend on the GPU, VBIOS and driver.
 
 **[Download releases](https://github.com/b00nz/mVolt/releases/latest)** ·
 **[User guide](docs/guide.md)** ·
@@ -15,10 +15,10 @@ GeForce generations. Availability depends on the GPU, VBIOS and driver.
 This README and the guide describe **v0.39**. Check the release page for the
 version of the downloadable build.
 
-![mVolt+ v0.39 core controls, including the new voltage-limit offset card](assets/mvolt-dashboard.png)
+![mVolt+ v0.39 dashboard with Quick tuning, core and fabric controls](assets/mvolt-dashboard.png)
 
-*Screenshots are live captures of v0.39 running on an RTX 5090. The displayed values illustrate the
-interface; they are not recommended tuning settings.*
+*Live screenshots from v0.39 on an RTX 5090. The values shown are not recommended
+tuning settings.*
 
 ## Start here
 
@@ -33,33 +33,27 @@ interface; they are not recommended tuning settings.*
 | Find out what is limiting boost | [Telemetry](docs/guide.md#telemetry) |
 | Fix a confusing reading or behavior | [Troubleshooting](docs/guide.md#troubleshooting) |
 
-The guide has expandable explanations for individual controls and common
-questions. It works directly on GitHub; no separate viewer is needed.
-
 ## What changed in v0.39
 
-- **Two redesigned rail cards:** VMIN, REL, ALT and supported OV offsets replace
-  absolute voltage-range sliders. REL and ALT can be edited together or separately.
-- **Clearer tuning workflow:** visible participation switches, live slider targets,
-  pending-change review and immediate per-card Reset.
-- **Normal profiles and optional full snapshots:** normal profiles apply the
-  controls enabled when saved; snapshots also restore captured disabled controls.
-- **Expanded telemetry:** absolute hotspot where supported, firmware clock history,
-  boost-limit reasons and timelines, rail power, memory pressure and PCIe traffic.
-- **A more flexible interface:** Quick tuning pins, collapsible sections, hover help,
-  interface scaling, Appearance settings and a compact two-column Overview.
-- **Improved integration:** profile participation, power reapplication, fan
-  transactions, startup readiness, recovery and repainting fixes.
+- Replaced absolute voltage-range sliders with VMIN, REL, ALT and supported OV
+  offsets. REL and ALT can be edited together or separately.
+- Rebuilt the dashboard with enable switches, Quick tuning pins, collapsible
+  sections, themes, tooltips and a two-column Overview.
+- Added hotspot where supported, firmware clock history, boost-limit reasons
+  and timelines, more rail readings, memory pressure and PCIe traffic.
+- Profiles now distinguish applying saved-enabled settings from restoring a
+  full snapshot, including captured disabled settings.
+- Added software fan curves and one Apply action for shared or individual fan targets.
+- Added immediate Reset, live slider target updates and V/F undo/redo.
+- Fixed power and profile application, startup, recovery, scaling and repainting.
 
 ## Quick start
 
 1. Download the executable or ZIP from [Releases](https://github.com/b00nz/mVolt/releases/latest).
-   The app needs 64-bit Windows and an NVIDIA driver. Administrator privileges
-   are required to apply tuning.
 2. Confirm the selected GPU in the header. Open **Telemetry** to inspect its
    readings, or launch with `--read-only` to explore with tuning writes disabled.
 3. Enable a control you want mVolt+ to manage, then adjust its target. Slider and
-   input edits stay pending. Use **Review…** and **Apply changes** to commit them.
+   input edits stay pending. Use **Review…**, then **Apply changes**.
 4. Once you have checked the result under your own workloads, use
    **Profiles → Save current settings as…** to save the configuration.
 
@@ -69,13 +63,11 @@ questions. It works directly on GitHub; no separate viewer is needed.
 | Action | What happens |
 | --- | --- |
 | Move a slider, type a target, edit curve points | Stages an edit; does not apply it |
-| Enable or disable a dashboard tile | Changes participation; disabling leaves the applied value in place |
+| Enable or disable a dashboard tile | Chooses whether Apply includes it; disabling leaves the applied value in place |
 | Apply changes / Reapply enabled | Writes enabled dashboard targets |
 | Apply fans | Writes the fan tile's pending targets in one step |
 | Reset / Reset all | Immediately applies the relevant defaults; no second Apply |
 | Boost lock | Immediately toggles boost performance mode |
-| Choose a profile in the header / Apply profile / profile shortcut | Immediately applies that profile |
-| Select a row in Profile Manager / Load for editing | Previews or stages the profile; does not apply it |
 | Discard pending | Restores editing targets from readback; does not reset hardware |
 
 Turning off advanced ranges can also apply narrower limits.
@@ -85,41 +77,29 @@ See [Advanced tuning](docs/guide.md#advanced-tuning).
 
 ## How profiles work
 
-Profiles belong to the selected GPU and VBIOS. They save values and the
-Enabled/Disabled switches **as they were when saved**; the dashboard's current
-switches do not override those choices when you load a profile.
+Profiles belong to the selected GPU and VBIOS. They use the Enabled/Disabled
+switches **saved in the profile**, regardless of the dashboard's current switches.
 
 | Mode | What applying the profile does |
 | --- | --- |
 | **Normal** (default) | Applies saved-enabled settings, including zero or stock values. Saved-disabled and absent settings stay untouched. |
-| **Full snapshot** (opt-in when saving) | Also restores captured disabled settings. Enabled controls use their targets, including pending edits; disabled controls use current GPU readback. Absent settings stay untouched. |
+| **Full snapshot** (opt-in when saving) | Restores captured settings, including disabled ones. When saving, enabled controls use their targets, including pending edits; disabled controls use GPU readback. Absent settings stay untouched. |
 
-Saving a profile does not apply it. **Load for editing** stages its targets and
-switches for review; **Apply profile**, choosing a profile in the header, or its
-global shortcut applies it immediately. Shortcuts require mVolt+ to be running,
-including in the tray. **Apply selected profile at logon** enables automatic
-application when you sign in.
-
-The guide explains [saving, snapshots, previews, shortcuts and profile matching](docs/guide.md#profiles),
-plus [startup and tray behavior](docs/guide.md#startup-and-tray).
+Saving does not apply anything; **Load for editing** stages the saved targets.
+**Apply profile**, a header profile selection or a profile shortcut applies
+immediately. See [Profiles](docs/guide.md#profiles) for the actions and
+[Startup and tray](docs/guide.md#startup-and-tray) for logon setup.
 
 ## Upgrading old profiles
 
-**Older supported profile files can be read, but some require review before
-they can be applied.** v0.39 changes both rail editing and profile behavior:
+v0.39 can read supported older profiles. If a profile contains **enabled old
+NVVDD/MSVDD voltage ranges**, choose **Load for editing**, review and adjust the
+new voltage offsets, then save it again. Old absolute voltage targets are not
+converted automatically.
 
-- An enabled old **absolute NVVDD/MSVDD range** cannot be applied directly,
-  including at logon. Use **Load for editing**, review the offsets seeded from
-  the GPU's **current readback**, then save an updated profile. This does not
-  recreate the old absolute range automatically.
-- In a normal profile, controls **enabled when saved** are applied. Saved-disabled
-  or absent controls are left untouched; disabled no longer means reset to stock.
-- **Full snapshot** is opt-in. It restores all captured controls, including
-  disabled ones. Existing profiles are not silently converted to this mode.
-
-Keep a copy of `%LOCALAPPDATA%\mVolt+` before upgrading if you need to return to
-v0.38. Review the saved switches and test a migrated profile before selecting it
-for automatic logon application. [Full migration instructions](docs/guide.md#upgrading-old-profiles).
+Check the saved Enabled/Disabled switches before applying. Keep a copy of
+`%LOCALAPPDATA%\mVolt+` if you might return to v0.38.
+[More about profile compatibility](docs/guide.md#upgrading-old-profiles).
 
 ## Controls and monitoring
 
@@ -133,10 +113,6 @@ for automatic logon application. [Full migration instructions](docs/guide.md#upg
 | Telemetry | Rails/ADCs, clocks, power, P-states, temperatures, boost limits, memory pressure and PCIe |
 | Overview | All current settings in two columns, profile/VBIOS identity, Copy summary and Always on top |
 | Profiles and preferences | Per-GPU/VBIOS profiles, full snapshots, shortcuts, logon application, RTSS overlay, scaling and themes |
-
-Features are enabled only where the relevant hardware and driver interfaces
-are supported. Some private monitoring features have narrower compatibility
-than the rest of the application. [Compatibility details](docs/guide.md#compatibility-and-multiple-gpus).
 
 ## What stays applied after closing?
 
@@ -186,9 +162,10 @@ Direct CLI tuning is applied immediately. Rail options now use
 - Working NVML support for GPU clock-range control and relevant NVML telemetry.
 - RivaTuner Statistics Server only if you want its on-screen overlay.
 
-RTX 50 / Blackwell is the primary target. RTX 40 / Ada, RTX 30 / Ampere,
-RTX 20 / Turing and GTX 10 / Pascal have experimental, feature-dependent support.
-Support for one function does not imply support for every rail, curve or sensor.
+Experimental support covers RTX 40 / Ada, RTX 30 / Ampere, RTX 20 / Turing and
+GTX 10 / Pascal. Support is checked per control and sensor; some monitoring
+features have narrower requirements.
+[Compatibility details](docs/guide.md#compatibility-and-multiple-gpus).
 
 mVolt+ is an independent third-party project. It is not affiliated with,
 sponsored by, approved by, or endorsed by NVIDIA Corporation. NVIDIA, GeForce,
