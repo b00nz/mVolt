@@ -1,10 +1,10 @@
 # mVolt+ user guide
 
-**For v0.39** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
+**For v0.40** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
 
 This guide covers dashboard controls, profiles, monitoring and startup. Expand
-a section for details. Screenshots show v0.39 on an RTX 5090; the values shown
-are not recommended tuning settings.
+a section for details. Screenshots show v0.39 on an RTX 5090; some controls have
+changed in v0.40. The values shown are not recommended tuning settings.
 
 ## Find your way
 
@@ -12,11 +12,10 @@ are not recommended tuning settings.
 | --- | --- |
 | [How the dashboard works](#how-the-dashboard-works) | Targets, switches, Apply, Reset and Discard |
 | [Dashboard control reference](#dashboard-control-reference) | Every tile, grouped as it appears in the app |
-| [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT, OV, linked editing and MAX |
+| [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT/OP, OV, linked editing and MAX |
 | [V/F Curve Editor](#vf-curve-editor) | Point edits, regions, Flatten above and global offsets |
 | [Fan control and persistence](#fan-control-and-persistence) | Fixed duty, firmware auto, curves and hysteresis |
 | [Profiles](#profiles) | Saving, applying, full snapshots, comparisons and shortcuts |
-| [Upgrading old profiles](#upgrading-old-profiles) | What carries forward and what needs review |
 | [Startup and tray](#startup-and-tray) | Logon readiness, recovery and closing behavior |
 | [Telemetry](#telemetry) | Sensors, graphs, boost reasons, memory pressure and PCIe |
 | [Overview](#overview) | A compact view of current settings |
@@ -78,7 +77,7 @@ NVVDD is the core voltage rail. These controls affect core voltage policy,
 core clock requests, the clock-range lock and the rail's current limit.
 
 <details>
-<summary><strong>Core voltage limits</strong> — VMIN, REL, ALT and supported OV offsets</summary>
+<summary><strong>Core voltage limits</strong> — VMIN, REL, ALT/OP and supported OV offsets</summary>
 
 Adjusts offsets to the core rail's driver voltage limits. Negative offsets lower
 the corresponding limit; positive offsets raise it. The driver baseline can move
@@ -87,7 +86,8 @@ stay fixed.
 
 The card shows the **Current effective maximum** and evaluated limits separately
 from its editable offsets. They describe voltage policy, not physical voltage.
-REL and ALT can be linked for editing or adjusted separately.
+Use the range slider and Min/Max fields, or select individual offset controls
+in Settings. In the offset view, REL and ALT/OP can be linked or edited separately.
 
 [Read the voltage-limit explanation](#voltage-limits-and-measured-voltage) before
 using these controls. Reset uses mVolt+'s mode-aware rail defaults; it does not
@@ -156,7 +156,7 @@ from VRAM tuning in the Memory section.
 <details>
 <summary><strong>MSVDD voltage limits</strong> — fabric-rail voltage-policy offsets</summary>
 
-Adjusts VMIN, REL, ALT and supported OV offsets for the MSVDD fabric rail,
+Adjusts VMIN, REL, ALT/OP and supported OV offsets for the MSVDD fabric rail,
 using its own reported limits. Linked editing works as on the core rail card.
 
 Changing fabric voltage limits can constrain fabric clocks; core/fabric clock
@@ -198,7 +198,7 @@ Changes the voltage demand for the GPU system domain. Positive values ask for
 more voltage; negative values ask for less. Another domain sharing its rail,
 or a voltage-policy limit, can determine the voltage actually supplied.
 
-This is separate from SYS frequency and either rail's REL/ALT limits.
+This is separate from SYS frequency and either rail's REL and ALT/OP limits.
 Reset clears the demand offset.
 
 </details>
@@ -330,7 +330,8 @@ duty remains after exit. [Compare the fan modes](#fan-control-and-persistence).
 **Boost lock** immediately requests the GPU's boost performance mode instead of
 normal idle downclocking. It can raise idle power consumption. It does not remove
 voltage, power or thermal limits, nor guarantee a particular frequency.
-Click it again to release the request.
+Click it again to release the request. Boost lock is an immediate action and is
+not stored in either normal profiles or full snapshots.
 
 It is separate from **Voltage boost** and **GPU clock range**. mVolt+ allows a
 clock range and Boost lock together; evaluate their combined behavior on your
@@ -338,15 +339,34 @@ hardware. Disabling the clock-range tile does not release an applied lock.
 
 ## Voltage limits and measured voltage
 
-**All controls in the two rail-limit cards adjust offsets to the driver's voltage
-limits. The resulting limits can change with operating conditions, even when
-your offsets stay unchanged.** Values are signed millivolts, not absolute targets.
+**Both rail-limit cards adjust offsets to the driver's voltage limits. The
+resulting limits can change with operating conditions, even when your offsets
+stay unchanged.**
+
+### Range slider and offset views
+
+New configurations start with **Range slider**. Choose **Settings → Appearance →
+Voltage controls** to switch between the range slider and individual offset
+controls. Existing saved view preferences are preserved.
+
+The range slider's lower handle and **Min** field adjust VMIN. Its upper handle
+and **Max** field calculate REL and ALT/OP offsets separately from their current
+baselines. These fields show estimated voltages in mV. **OV can still restrict the
+effective maximum.** Adjust OV separately when supported.
+
+In the offset view, fields show signed mV offsets directly. REL and ALT/OP can be
+linked or edited separately. Both views edit the same pending settings;
+changing views alone does not apply or reset them.
+
+The range view estimates the result from current baselines. It does not hold an
+absolute voltage when the driver later changes those baselines. Compare
+**Current effective maximum** with measured voltage after applying.
 
 | Control or reading | What it means | Effect of changing it |
 | --- | --- | --- |
 | **Minimum offset (VMIN)** | Offset to the minimum-voltage policy | Lowering reduces the minimum request; raising can hold the rail at a higher requested minimum. Other policy and operating constraints still apply. |
 | **Reliability offset (REL)** | Offset to the reliability voltage limit | Raising permits a higher REL limit; lowering makes it more restrictive. It does not force the rail to use that voltage. |
-| **Alternate limit offset (ALT)** | Offset to an alternate reliability limit | Changes the alternate limit. The driver determines when it applies; there is no universal rule that it is only a temperature or aging limit. |
+| **Operating limit offset (ALT/OP)** | Offset to the maximum operating-voltage limit, also called Vop | Raising permits a higher operating limit; lowering makes it more restrictive. REL, OV and other active limits can still constrain the result. |
 | **Overvoltage offset (OV)** | Offset to the overvoltage policy ceiling | A sufficiently lower OV can constrain the effective maximum. Raising it may have no effect while another limit remains tighter. |
 | **Current effective maximum / MAX** | The driver's evaluated upper limit now | Read-only. Reports the current policy result, not pending edits or measured rail voltage. |
 
@@ -358,19 +378,19 @@ The voltage device's reported range is separate from the policy-offset ranges.
 <summary><strong>Why changing REL alone may do nothing</strong></summary>
 
 Another applicable limit can still constrain the maximum. If REL rises while
-ALT or OV remains more restrictive, MAX may stay unchanged. Even when MAX rises,
+ALT/OP or OV remains more restrictive, MAX may stay unchanged. Even when MAX rises,
 the workload may not request more voltage or another power/clock limit may intervene.
 
 Watch the evaluated limits, then compare physical sensor readings under comparable
-conditions. Do not assume every GPU or operating state requires both REL and ALT
+conditions. Do not assume every GPU or operating state requires both REL and ALT/OP
 to change.
 
 </details>
 
 <details>
-<summary><strong>Linked versus separate REL/ALT editing</strong></summary>
+<summary><strong>Linked versus separate REL and ALT/OP editing</strong></summary>
 
-**Linked** presents one REL + ALT offset control. A deliberate edit sets the
+**Linked** presents one REL + ALT/OP offset control. A deliberate edit sets the
 same offset in both pending fields. **Separate** exposes each offset on its own.
 Profiles with unequal values retain them and open in separate mode.
 
@@ -398,7 +418,7 @@ physical voltage measurements.
 <details>
 <summary><strong>What Reset does on the rail cards</strong></summary>
 
-NVVDD Reset clears VMIN, REL and ALT offsets. MSVDD Reset clears VMIN and ALT
+NVVDD Reset clears VMIN, REL and ALT/OP offsets. MSVDD Reset clears VMIN and ALT/OP
 and restores mVolt+'s established **−50 mV REL** default. Supported OV offsets
 are cleared. If the default REL would exceed the current mode/device ceiling,
 the reset request is limited to that ceiling.
@@ -421,18 +441,40 @@ separates global core offset, point offset and the effective shift.
 | Action | Result |
 | --- | --- |
 | Click a point | Selects the point |
+| Mouse wheel over the graph | Zooms around the pointer; voltage and frequency axes update together |
+| Fit curve / F | Restores the full view without changing points or locks |
+| Left / Right with graph focus | Selects the adjacent point and brings it into view when zoomed |
+| Up / Down with graph focus | Stages a 15 MHz increase/decrease for the selected point |
 | Drag a point vertically | Stages a new frequency at that voltage bin |
 | Drag empty graph space | Selects a region; dragging a selected point moves the selection |
 | Selected MHz → Set point | Stages the entered frequency for the selected point |
 | Point offset → Set offset | Stages the regional frequency offset for selected points |
 | Flatten above | Stages a flat upper curve from the selected point through higher-voltage bins |
+| Lock voltage point | Immediately requests the selected point's voltage bin; click Release voltage point to release it |
+| Limit max clock | Immediately caps core frequency at the selected point's displayed frequency, including pending edits; click Release clock limit to release it |
 | Undo / Redo | Restores pending edits; a drag is one history step |
 | Apply | Writes and verifies the pending curve |
 | Discard | Returns to the currently applied curve without resetting it |
 | Reset V/F curve | Immediately clears regional point offsets, preserving separate global settings |
 
+Select one point to use either lock button. Locks can be set while curve edits
+are pending; locking does not apply or discard those edits. A voltage lock follows
+the applied curve until you apply its frequency changes. The editor shows an active voltage lock as a vertical line, or an
+active clock ceiling as a horizontal line, based on driver readback.
+
+These two actions replace each other and the header's Boost lock. **Limit max
+clock** is unavailable while a GPU clock-range lock is active; release that range
+first. A voltage-point lock can coexist with the GPU clock range. Other GPU
+limits still apply, so a lock does not guarantee the measured clock or voltage.
+
+The lock buttons act immediately and are not saved in profiles or full snapshots.
+They remain applied after exit until released or cleared by the driver.
+**Reset all** releases them; **Reset V/F curve** only resets curve offsets.
+
 Ctrl+Z and Ctrl+Y work when the graph has focus. Applying, discarding or refreshing
 the curve starts a new edit history.
+Click the graph before using its arrow keys. While a numeric field has focus,
+Left/Right move its text caret instead of selecting another curve point.
 
 Global core clock offset and regional V/F offsets stack. Core voltage demand can
 also affect the displayed voltage axis. Voltage bins are not moved by dragging;
@@ -511,6 +553,11 @@ when saving if you want to restore captured disabled controls too. Disabled
 controls are captured from GPU readback; enabled controls use dashboard targets,
 including pending edits.
 
+Boost lock and the V/F editor's voltage-point and maximum-clock locks are
+immediate actions, excluded from both modes. Applying a profile does not request
+or release them. The separate **GPU clock range** setting and saved V/F curve
+edits remain part of profiles.
+
 A snapshot can restore a stock board-power limit even if that tile was disabled
 at capture, provided that stock limit was actually read then. Disabling a tile
 is not evidence that its value is stock.
@@ -544,38 +591,20 @@ or Win. Save it with the profile. Backspace or Delete clears the shortcut.
 Shortcuts work while mVolt+ runs, including in the tray, and apply the same saved
 configuration as **Apply profile**. Shortcut conflicts are shown beside the field.
 
-## Upgrading old profiles
-
-v0.39 can read supported older profiles. Profiles with **enabled old NVVDD/MSVDD
-voltage ranges** cannot be applied, including at logon, until updated. Choose
-**Load for editing**, review and adjust VMIN/REL/ALT/OV, then save the profile
-again. The editor starts from **current driver offsets**; old absolute voltage
-targets are not converted automatically because the driver's baselines can change.
-
-Disabled rails in a normal profile do not need this conversion. Saved-disabled
-and absent controls stay untouched, and older profiles remain in normal mode
-unless you explicitly choose Full snapshot. Check the saved Enabled/Disabled
-switches before applying.
-
-If you might return to v0.38, close the app and keep a copy of
-`%LOCALAPPDATA%\mVolt+` before saving updated profiles. Verify an updated profile
-manually before selecting it for logon application.
-
-OV can also become unavailable after a GPU or driver change. **Load for editing**
-excludes unsupported OV and shows a notice, leaving the original saved profile
-and existing GPU OV offset unchanged. Review and save a new profile for the
-remaining controls; automatic application of the unsupported request is refused.
-
 ## Startup and tray
 
 **Apply selected profile at logon** applies a profile when you sign in.
 **Start in tray at Windows logon** keeps mVolt+ running in the notification area.
 A startup profile that needs background fan control also keeps the app in the tray.
 
-mVolt+ waits up to 60 seconds for the NVIDIA display service, if enabled, and
-stable readings from the selected GPU and required controls. The NVIDIA Control
-Panel window does not need to be open. If the checks fail, startup exits without
-applying.
+mVolt+ waits up to 60 seconds for stable readings from the selected GPU. It does
+not require the NVIDIA Control Panel window or its container service to be
+running. Once the GPU is ready, the profile is validated and applied; a profile
+error is reported without repeating the readiness wait.
+
+If startup fails, mVolt+ records the reason and attempts a notification. The next
+interactive launch also shows the retained warning. Dismissing that warning does
+not retry an apply.
 
 | Preference or action | Behavior |
 | --- | --- |
@@ -603,7 +632,7 @@ being presented as measured zeroes.
 <details>
 <summary><strong>Rails</strong> — rail voltages and local ADC sensors</summary>
 
-Shows rail voltage readbacks and individual on-chip ADC sensors. REL, ALT, MAX
+Shows rail voltage readbacks and individual on-chip ADC sensors. REL, ALT/OP, MAX
 and OV lines describe voltage policy; individual ADC values describe sensor
 readings. Differences can reflect sensor location, calibration, voltage drop
 and sampling time.
@@ -731,6 +760,13 @@ and restore your preference when it fits again; scrolling handles remaining over
 **Manage profiles…** opens Profile Manager. Tray preferences are explained in
 [Startup and tray](#startup-and-tray).
 
+**Reset app preferences** restores this GPU's app preferences to fresh-install
+defaults: no Quick tuning pins, all sections expanded and tiles visible, voltage
+range sliders, default sizing/theme, monitoring and advanced options. It also
+clears the logon profile selection and start-in-tray option. Saved profiles,
+currently applied GPU settings and the accepted initial warning are kept. Use
+the dashboard's **Reset all** to reset GPU tuning instead.
+
 ### Monitoring and RTSS
 
 **Refresh interval** controls dashboard readback frequency, from 100 to 60,000 ms.
@@ -752,11 +788,14 @@ are off by default.
 Choose **mVolt+ Dark**, Graphite, Midnight or Violet, or customize the shared
 colors. Changes update the app's windows and are saved for the selected GPU.
 **Reset colors** restores the default palette without changing tuning.
+**Voltage controls** selects the [range slider or offset view](#range-slider-and-offset-views).
 
 Click a section heading to collapse or expand it. Use **Sections** to jump to
 sections and manage tiles. Pinning moves a card to Quick tuning; hiding removes
 it from view. **Hiding, collapsing and pinning do not change whether a setting
 is applied or stored in a profile.** Apply still includes hidden enabled cards.
+New configurations have no pinned cards, so Quick tuning appears only after you
+pin one. Existing saved pins are preserved.
 
 ## Advanced tuning
 
@@ -776,7 +815,7 @@ the application reports the failure.
 Standard voltage mode uses **1.15 V**, or a lower valid reported device maximum.
 XOC follows the selected rail's reported device maximum where available. A device
 range is not a measured voltage, a supported range for all policy offsets, or a
-safe operating-voltage rating. The +250 mV upper REL/ALT/OV offset bounds remain
+safe operating-voltage rating. The +250 mV upper bounds for REL, ALT/OP and OV remain
 mVolt+ application limits. Apply checks current limits; moving driver baselines
 mean this is not a permanent absolute-voltage lock.
 
@@ -837,18 +876,22 @@ They do not create a dashboard draft. Unspecified controls are left untouched.
 | `--boost` | Voltage Boost percentage |
 | `--msvdd-clock-ratio` | NVVDD/MSVDD clock propagation ratio; retains this historical option name |
 | `--nvvdd-ocp` / `--msvdd-ocp` | Rail output-current limit in amps |
-| `--boost-lock` | `on` or `off` |
+| `--boost-lock` | `on` or `off`; immediate action, not saved in profiles |
 | `--clock-range` | `MIN,MAX` in MHz, or `default` to release the lock |
 | `--xoc` | Selects the extended voltage-ceiling mode for the request |
 | `--profile` | Saved profile name or ID |
 | `--gpu` | Adapter index; default 0 for CLI selection |
 | `--gpu-id` | Stable adapter identity; takes precedence over the index |
 
-Rail offset lists accept up to three decimal places in mV. Omitted OV is left
-untouched; an explicit zero OV requests clearing the offset. The old absolute
-`--nvvdd` and `--msvdd` options report a migration error instead of guessing a
-conversion. Historical OCP aliases `--core-ocp` and `--mem-ocp` remain accepted
-for compatibility but are omitted from help.
+Rail commands take signed offsets, not absolute voltages or the range view's
+estimated Min/Max values. ALT is the limit labelled **ALT/OP** (Vop) in the UI.
+Lists accept up to three decimal places in mV. Omitted OV is left untouched;
+an explicit zero clears its offset. REL and ALT are separate positional values:
+the GUI's linked editing preference does not change CLI arguments.
+
+Historical OCP aliases `--core-ocp` and `--mem-ocp` remain accepted but are omitted
+from help. The V/F editor's point-lock buttons are GUI actions; they have no
+dedicated CLI options.
 
 </details>
 
@@ -859,8 +902,9 @@ selected GPU:
 .\mVolt+.exe --profile "Your saved profile" | Out-Host
 ```
 
-Normal/full-snapshot behavior follows the saved profile. A one-shot CLI profile
-can apply fixed fan duty or firmware auto, but refuses an active software fan
+Normal profiles apply saved-enabled controls; full snapshots also restore
+captured disabled controls. Boost lock remains outside both modes.
+A one-shot CLI profile can apply fixed fan duty or firmware auto, but refuses an active software fan
 curve because it needs mVolt+ to keep running. Use the GUI/tray and configured logon
 behavior for software curves. `--diagnostic` creates a local compatibility report.
 
@@ -904,7 +948,7 @@ See [How the dashboard works](#how-the-dashboard-works).
 </details>
 
 <details>
-<summary><strong>REL and ALT changed, but measured voltage did not</strong></summary>
+<summary><strong>REL and ALT/OP changed, but measured voltage did not</strong></summary>
 
 Check **Current effective maximum**. Another limit may still constrain it; even
 if MAX rises, the workload may not need more voltage.
@@ -922,12 +966,11 @@ ceiling. Review the rail readouts and [Advanced tuning](#advanced-tuning).
 </details>
 
 <details>
-<summary><strong>An old profile will not apply, or no longer resets a disabled control</strong></summary>
+<summary><strong>A profile leaves a disabled control unchanged</strong></summary>
 
-Enabled legacy voltage ranges need review and resaving; follow the
-[profile upgrade instructions](#upgrading-old-profiles). Normal profiles leave
-saved-disabled controls untouched. Use a [full snapshot](#normal-profiles-and-full-snapshots)
-to restore their captured values too.
+Normal profiles leave saved-disabled controls untouched. Use a
+[full snapshot](#normal-profiles-and-full-snapshots) to restore their captured
+values too.
 
 </details>
 
@@ -951,8 +994,9 @@ See [Fan control and persistence](#fan-control-and-persistence).
 <details>
 <summary><strong>Startup is delayed or the profile does not load</strong></summary>
 
-Check the startup log and selected logon profile. Legacy voltage ranges,
-unsupported controls or an incomplete earlier attempt can prevent application.
+Read the startup warning and check the profile selected for logon. Unsupported
+controls, unavailable GPU readings or an incomplete earlier attempt can prevent
+application.
 See [Startup and tray](#startup-and-tray) and [Files and logging](#files-and-logging).
 
 </details>
