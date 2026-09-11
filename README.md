@@ -17,7 +17,7 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **v0.40**. Check the release page for the
+This README and the guide cover **v0.41**. Check the release page for the
 currently downloadable version.
 
 ## Features
@@ -27,10 +27,12 @@ currently downloadable version.
   Both views edit offsets; evaluated voltage limits remain visible.
 - **Clocks:** core, memory, XBAR, SYS and video offsets; per-domain voltage
   demand; core/fabric clock propagation ratio; GPU clock range and Boost lock.
-- **V/F editor:** wheel zoom, keyboard point editing, Flatten above, undo/redo, and
-  immediate voltage-point or maximum-clock locks.
+- **V/F editor:** wheel zoom, drag to pan when zoomed, keyboard point editing,
+  Flatten above, undo/redo, a live operating-point marker, and immediate
+  voltage-point or maximum-clock locks.
 - **Power and cooling:** board power limit, Voltage Boost, NVVDD/MSVDD OCP,
-  shared or individual fan duty, and temperature-based fan curves.
+  shared or individual fan-channel duty within the driver's reported limits,
+  and temperature-based fan curves.
 - **Monitoring:** rail and ADC readings, clock graphs, power, P-states,
   temperatures, boost-limit reasons, memory pressure and PCIe traffic.
 - **Dashboard:** collapsible sections, optional Quick tuning pins, tile
@@ -48,8 +50,13 @@ dashboard's current switches.
 
 | Mode | What applying it does |
 | --- | --- |
-| **Normal** (default) | Applies saved-enabled settings, including zero or stock values. Saved-disabled and absent settings stay untouched. |
-| **Full snapshot** | Restores every captured setting, including disabled ones. Enabled controls are saved from their targets; disabled controls from GPU readback. Absent settings stay untouched. |
+| **Normal / Only enabled settings** (default) | Applies saved-enabled targets, including edits that were pending when saved. Saved-disabled and absent settings stay untouched. |
+| **Full snapshot** | Restores captured applied values, including controls whose switches were off. Pending edits are not saved. Absent settings stay untouched. |
+
+The first new-profile save asks which mode to use, including after upgrading
+from v0.40. The choice is remembered for this GPU and can be changed in
+**Settings → General → New profile mode** or overridden for one save. Existing
+profiles keep their saved mode.
 
 Saving does not apply anything. **Load for editing** stages targets;
 **Apply profile**, a header selection or a global shortcut applies immediately.
@@ -62,8 +69,9 @@ both profile modes. Saved V/F curve edits remain part of profiles.
 
 ## Tuning Overview
 
-Overview shows all current settings in two columns, alongside the profile and
-VBIOS identity. **Copy summary** copies the readback; **Always on top** keeps
+Overview shows current settings, including the configured power limit in watts,
+alongside the profile and VBIOS identity. That limit is separate from measured
+power consumption. **Copy summary** copies the readback; **Always on top** keeps
 the window visible beside another application.
 
 ## Telemetry and RTSS
@@ -83,8 +91,9 @@ overlay. Choose the readings in **Settings → Monitoring**.
 - **RTX 40 / Ada, RTX 30 / Ampere, RTX 20 / Turing and GTX 10 / Pascal:**
   experimental support, checked per control and sensor.
 
-A working clock or power control does not imply support for every voltage rail
-or monitoring feature. See [compatibility and multiple GPUs](docs/guide.md#compatibility-and-multiple-gpus).
+Each control checks for a supported interface and valid driver data. A working
+clock or power control does not imply support for every voltage rail or sensor.
+See [compatibility and multiple GPUs](docs/guide.md#compatibility-and-multiple-gpus).
 
 ## Safety and persistence
 
@@ -117,7 +126,7 @@ mV: `--nvvdd-offsets VMIN,REL,ALT[,OV]` and
 
 ## Screenshots
 
-Live screenshots from v0.39 on an RTX 5090. Some controls have changed in v0.40;
+Screenshots from an RTX 5090. Some controls may differ in the current version;
 the values shown are not recommended tuning settings.
 
 ### Dashboard

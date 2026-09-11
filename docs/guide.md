@@ -1,10 +1,10 @@
 # mVolt+ user guide
 
-**For v0.40** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
+**For v0.41** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
 
 This guide covers dashboard controls, profiles, monitoring and startup. Expand
-a section for details. Screenshots show v0.39 on an RTX 5090; some controls have
-changed in v0.40. The values shown are not recommended tuning settings.
+a section for details. Screenshots are from an RTX 5090; some controls may differ
+in the current version. The values shown are not recommended tuning settings.
 
 ## Find your way
 
@@ -13,7 +13,7 @@ changed in v0.40. The values shown are not recommended tuning settings.
 | [How the dashboard works](#how-the-dashboard-works) | Targets, switches, Apply, Reset and Discard |
 | [Dashboard control reference](#dashboard-control-reference) | Every tile, grouped as it appears in the app |
 | [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT/OP, OV, linked editing and MAX |
-| [V/F Curve Editor](#vf-curve-editor) | Point edits, regions, Flatten above and global offsets |
+| [V/F Curve Editor](#vf-curve-editor) | Zoom, pan, point edits, live marker and locks |
 | [Fan control and persistence](#fan-control-and-persistence) | Fixed duty, firmware auto, curves and hysteresis |
 | [Profiles](#profiles) | Saving, applying, full snapshots, comparisons and shortcuts |
 | [Startup and tray](#startup-and-tray) | Logon readiness, recovery and closing behavior |
@@ -312,9 +312,14 @@ adjust the ratio.
 <details>
 <summary><strong>Fan control</strong> — fixed duty for all fans or individual channels</summary>
 
-Sets a fixed fan duty, in percent. **All fans** sets a shared pending target;
-individual sliders change only their own fan. Different targets make the shared
-control show **Mixed**. Moving All fans again replaces the individual targets.
+Sets a fixed fan duty, in percent. Each slider follows a driver-reported fan
+channel and its own duty limits. A channel may drive more than one physical fan;
+the displayed channel count does not necessarily match the number of fans.
+
+**All fans** sets a shared pending target within the range supported by every
+channel. Individual sliders change only their own channel. Different targets
+make the shared control show **Mixed**. Moving All fans again replaces those
+targets. Zero duty is available only where the driver allows it.
 
 **Apply fans** commits the tile in one step; global Apply can commit it too.
 Applying fixed duty replaces an active software fan curve. RPM depends on fan
@@ -446,7 +451,8 @@ separates global core offset, point offset and the effective shift.
 | Left / Right with graph focus | Selects the adjacent point and brings it into view when zoomed |
 | Up / Down with graph focus | Stages a 15 MHz increase/decrease for the selected point |
 | Drag a point vertically | Stages a new frequency at that voltage bin |
-| Drag empty graph space | Selects a region; dragging a selected point moves the selection |
+| Left-drag empty graph space while zoomed | Pans the view in both directions without changing curve points |
+| Drag empty graph space at full view, or Shift+drag at any zoom | Selects a region; dragging a selected point moves the selection |
 | Selected MHz → Set point | Stages the entered frequency for the selected point |
 | Point offset → Set offset | Stages the regional frequency offset for selected points |
 | Flatten above | Stages a flat upper curve from the selected point through higher-voltage bins |
@@ -456,6 +462,14 @@ separates global core offset, point offset and the effective shift.
 | Apply | Writes and verifies the pending curve |
 | Discard | Returns to the currently applied curve without resetting it |
 | Reset V/F curve | Immediately clears regional point offsets, preserving separate global settings |
+| Show live / Hide live | Shows or hides the live operating-point marker and its readout for this app session |
+
+The live marker uses the core ADC voltage average, matching the dashboard header,
+and the current driver-reported core clock. It shows measured operation rather
+than selecting an exact curve point. It does not follow pending curve edits.
+Missing or stale readings hide the marker; readings outside the zoomed view are
+not pinned to the graph edge. Zooming and panning update both axes without
+changing settings.
 
 Select one point to use either lock button. Locks can be set while curve edits
 are pending; locking does not apply or discard those edits. A voltage lock follows
@@ -507,7 +521,8 @@ hide the window while mVolt+ continues controlling the fans.
 3. Set **Use fan curve** to On and choose the fall hysteresis.
 4. Click **Apply**. Pending edits do not replace the running curve before Apply.
 
-The software curve drives fans together within their supported duty ranges.
+The software curve drives all reported channels together within their shared
+supported duty range.
 To return to firmware control, apply the curve with **Use fan curve: Off**, or
 use the dashboard's immediate **Reset to auto**.
 
@@ -548,10 +563,27 @@ switches do not override those saved choices when the profile is loaded.
 | Present and disabled | Leaves the current GPU setting untouched | Restores its captured readback value |
 | Absent or unavailable at capture | Leaves it untouched | Leaves it untouched |
 
-**Normal is the default.** Select **Full snapshot (include disabled settings)**
-when saving if you want to restore captured disabled controls too. Disabled
-controls are captured from GPU readback; enabled controls use dashboard targets,
-including pending edits.
+On the first new-profile save, mVolt+ asks whether to use **Only enabled settings**
+(normal mode) or **Full snapshot**. Users upgrading from v0.40 receive the same
+choice when they next create a profile. It is remembered for this GPU; it does
+not appear at startup or when applying an existing profile.
+
+Change the default in **Settings → General → New profile mode**. The save form's
+**Full snapshot (include disabled settings)** checkbox overrides it for one save.
+Existing profiles keep their mode, including when overwritten.
+
+**Normal profiles save enabled targets, including pending edits. Full snapshots
+capture applied values for all included controls, regardless of their switches.**
+Pending slider values, fan-mode changes and curve edits are excluded from snapshot
+capture. For example, with +250 MHz memory applied and +500 MHz pending, a snapshot
+saves +250 MHz. Applying it restores +250 MHz and updates the target accordingly.
+A normal profile with memory enabled saves the +500 MHz target instead.
+
+When switching normal profiles, untouched settings remain applied. If profile A
+(or any other software) applies a V/F curve and fan settings, then profile B
+changes only power, that curve and those fan settings stay active. A full snapshot
+instead restores its included captured settings, so it can replace tuning from
+another profile or application.
 
 Boost lock and the V/F editor's voltage-point and maximum-clock locks are
 immediate actions, excluded from both modes. Applying a profile does not request
@@ -569,7 +601,7 @@ is not evidence that its value is stock.
 | Select a profile in the list | Shows its saved values without applying |
 | Save current settings as… | Captures the settings and opens Save profile |
 | Save profile | Stores the captured configuration; does not write to the GPU |
-| Overwrite selected | Replaces the selected profile with current dashboard configuration |
+| Overwrite selected | Keeps the profile's mode; normal profiles capture enabled targets, full snapshots capture applied values |
 | Differences from applied… | Compares the settings the profile would apply with current GPU values |
 | Apply profile | Immediately applies the saved configuration |
 | Load for editing | Stages its targets and switches on the dashboard |
@@ -580,8 +612,9 @@ The header profile menu applies immediately. After an apply, mVolt+ can recogniz
 the profile on the next launch if readback still matches, without applying it
 again. **Custom** means no saved profile is currently identified as active.
 
-Stored V/F edits are part of the saved configuration. Fan curves use their
-applied/pending mode separately from duty that changes during monitoring.
+Stored V/F edits are part of the saved configuration. Snapshot capture uses the
+applied curve and fan configuration, excluding pending changes. A running fan
+curve's changing duty is telemetry, not a pending edit.
 Loading a normal profile with fan control disabled leaves a running fan curve alone.
 
 ### Global profile shortcuts
@@ -692,9 +725,9 @@ Shows current GPU temperature, absolute GPU hotspot temperature and memory-junct
 temperature where available. Hotspot is an absolute sensor temperature, not
 hotspot minus GPU temperature.
 
-The direct hotspot implementation is currently validated for the desktop RTX 5090
-with driver 616.64. Other supported tuning features do not imply that this sensor
-path is available on another card or driver.
+Hotspot availability is checked through the driver interface and returned data;
+it is not restricted to one GPU model or driver version. A card can support other
+tuning features without exposing this sensor.
 
 </details>
 
@@ -742,7 +775,8 @@ memory; closing the process clears the monitoring session.
 
 Overview shows all settings in two columns, including stock values, unavailable
 fields and values whose dashboard switches are disabled. Its header identifies
-the GPU, recognized profile and VBIOS.
+the GPU, recognized profile and VBIOS. The configured power limit is also shown in
+watts where available. It is the current setting, not measured power consumption.
 
 **Copy summary** copies current applied/readback settings. **Always on top** keeps
 the window above other applications. Pending dashboard targets are not presented
@@ -760,11 +794,16 @@ and restore your preference when it fits again; scrolling handles remaining over
 **Manage profiles…** opens Profile Manager. Tray preferences are explained in
 [Startup and tray](#startup-and-tray).
 
+**New profile mode…** chooses whether new profiles default to only enabled
+settings or a full snapshot of applied values. Existing profiles are unaffected.
+See [Profiles](#profiles) for what each mode saves and restores.
+
 **Reset app preferences** restores this GPU's app preferences to fresh-install
 defaults: no Quick tuning pins, all sections expanded and tiles visible, voltage
 range sliders, default sizing/theme, monitoring and advanced options. It also
-clears the logon profile selection and start-in-tray option. Saved profiles,
-currently applied GPU settings and the accepted initial warning are kept. Use
+clears the new-profile mode choice, logon profile selection and start-in-tray
+option. Saved profiles, currently applied GPU settings and the accepted initial
+warning are kept. Use
 the dashboard's **Reset all** to reset GPU tuning instead.
 
 ### Monitoring and RTSS
@@ -830,10 +869,12 @@ RTX 20 / Turing and GTX 10 / Pascal support is experimental and differs by featu
 Support for ordinary power and clock controls does not imply support for a
 particular voltage rail or editor.
 
-The app checks architecture information and probes the selected card. A missing
-or rejected interface can leave one control unavailable while others continue
-working. Direct hotspot and detailed boost-limit data have more specific
-requirements. OV is also restricted to its supported GPU/driver path.
+The app probes each control's interface and validates its returned data layout.
+A missing or rejected interface can leave one control unavailable while others
+continue working. Hotspot, detailed boost limits and OV do not require an exact
+GPU model or driver version. Architecture checks remain where needed to validate
+different clock-record layouts. A GPU's generation alone does not disable a
+feature whose interface and layout checks succeed.
 
 Select the intended adapter in the header and confirm its name and identity before
 tuning. Monitoring and profiles then use that adapter. Settings applied to the
