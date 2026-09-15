@@ -17,8 +17,24 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **v0.41**. Check the release page for the
+This README and the guide cover **mVolt+ v0.43**. Check the release page for the
 currently downloadable version.
+
+## In v0.43
+
+- **Power cap in watts:** set an additional watt limit, compare Applied and Live
+  readings, and use Reset to return to percentage control.
+- **Greater driver compatibility:** support for different power-control and
+  telemetry formats across the R591, R595, R596, R610 and R616 driver families.
+  Individual features still depend on the GPU and driver.
+- **Profile fixes:** ordinary percentage profiles no longer require an unrelated
+  watt-cap read to succeed. Snapshots captured without a cap can be applied after
+  the cap has been reset.
+- **Window and input fixes:** saved narrow window sizes are restored, with fixes
+  for slider/input redraw and startup window placement.
+
+[Watt-cap guide](docs/guide.md#power-cap-in-watts) ·
+[Power controls in profiles](docs/guide.md#power-controls-in-profiles)
 
 ## Features
 
@@ -30,7 +46,8 @@ currently downloadable version.
 - **V/F editor:** wheel zoom, drag to pan when zoomed, keyboard point editing,
   Flatten above, undo/redo, a live operating-point marker, and immediate
   voltage-point or maximum-clock locks.
-- **Power and cooling:** board power limit, Voltage Boost, NVVDD/MSVDD OCP,
+- **Power and cooling:** percentage power limit and an additional watt cap,
+  Voltage Boost, NVVDD/MSVDD OCP,
   shared or individual fan-channel duty within the driver's reported limits,
   and temperature-based fan curves.
 - **Monitoring:** rail and ADC readings, clock graphs, power, P-states,
@@ -61,6 +78,11 @@ profiles keep their saved mode.
 Saving does not apply anything. **Load for editing** stages targets;
 **Apply profile**, a header selection or a global shortcut applies immediately.
 Profiles can also be selected for application at Windows logon.
+
+Applying a normal watt-cap profile leaves the existing percentage limit in place;
+the lower limit governs. Applying a percentage profile releases a cap owned by
+mVolt+ before setting the percentage. Full snapshots capture both applied
+power requests. See [power controls in profiles](docs/guide.md#power-controls-in-profiles).
 
 Boost lock and the V/F editor's point/clock locks are immediate actions, outside
 both profile modes. Saved V/F curve edits remain part of profiles.
@@ -93,6 +115,10 @@ overlay. Choose the readings in **Settings → Monitoring**.
 
 Each control checks for a supported interface and valid driver data. A working
 clock or power control does not imply support for every voltage rail or sensor.
+Power-control and detailed-telemetry readers support formats used across the
+R591, R595, R596, R610 and R616 families. Selection follows the interface's
+response, not a driver-version allowlist; this is not a guarantee for every
+release or board in those families.
 See [compatibility and multiple GPUs](docs/guide.md#compatibility-and-multiple-gpus).
 
 ## Safety and persistence
@@ -121,6 +147,11 @@ rating.
 Direct CLI tuning applies immediately. Rail commands accept signed offsets in
 mV: `--nvvdd-offsets VMIN,REL,ALT[,OV]` and
 `--msvdd-offsets VMIN,REL,ALT[,OV]`. ALT is the limit labelled **ALT/OP** in the UI.
+
+Use `--power-cap-watts WATTS` for an additional watt cap, or
+`--return-to-percentage` to release it without changing the percentage setting.
+New watt targets start at 1 W, accept up to three decimal places, and cannot
+exceed the reported maximum. This feature does not require a separate kernel driver.
 
 [CLI reference and automation](docs/guide.md#command-line-and-automation)
 
