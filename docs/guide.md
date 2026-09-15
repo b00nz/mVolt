@@ -146,7 +146,7 @@ different behaviors and their combined result depends on the GPU and driver.
 
 Sets the output-current limit for the NVVDD core rail. Lower values can make
 current limiting reduce core boost sooner; higher values permit more current
-within the other active limits. This is a protection threshold, not measured
+within the other active limits. This is a driver policy setting, not measured
 current or the board's power budget.
 
 The ordinary range is capped at the firmware default where available. **OCP
@@ -251,7 +251,8 @@ Reset clears the offset.
 
 Sets the output-current limit for the MSVDD fabric rail. Lower values can
 constrain fabric boost sooner; higher values permit more current within other
-active limits. It is a protection threshold, not measured current.
+active limits. It is a driver policy setting, not measured current or proof of
+the regulator's physical protection threshold.
 
 **OCP unlock** expands the editable range beyond the firmware default where
 supported. Reset restores this rail's firmware current limit.
@@ -328,6 +329,17 @@ available. Missing range information is not shown as a guessed driver range.
 To see the relationship in practice, use a low power limit under a steady load
 and watch how XBAR, SYS and video clocks change relative to the core as you
 adjust the ratio.
+
+</details>
+
+<details>
+<summary><strong>Power cap (watts)</strong> — an additional board-power limit</summary>
+
+Sets a watt cap while preserving the existing percentage request. The card
+shows Target, Applied, Live and Allowed. Reset immediately returns to percentage
+control without resetting that percentage to 100%.
+
+See [Power cap in watts](#power-cap-in-watts) for examples, limits and persistence.
 
 </details>
 
@@ -680,9 +692,10 @@ enabled percentage setting hands back control from a cap owned by mVolt+.
 | A sets a watt cap; B changes only clocks | The cap remains applied. |
 | Another application sets a cap; B sets percentage power | mVolt+ does not automatically clear the other application's cap. Use the watt tile's Reset if you want to release it. |
 
-An ordinary percentage profile does not require a watt-cap read to succeed
-when mVolt+ has no cap to release and no recovery or interface reconnection is
-pending. This also applies to logon and shortcut application.
+Ordinary percentage profiles can still apply when optional watt-cap readings
+are unavailable, unless those readings are needed to release a cap or recover
+the connection or an earlier operation. This also applies at logon and through
+profile shortcuts.
 
 Full snapshots capture both applied power requests, including when their editing
 switches are off. Pending watt edits are excluded. A snapshot captured with no
@@ -1103,6 +1116,40 @@ The download is a single executable. Configuring elevated logon application
 installs the protected startup copy described above.
 
 ## Troubleshooting
+
+<details>
+<summary><strong>The percentage power slider is disabled</strong></summary>
+
+A selected or active watt cap takes over percentage editing. The previous
+percentage setting still applies. Choose **Reset** on **Power cap (watts)** to
+release the cap and use the percentage slider again. A cap set outside mVolt+
+can have the same effect; Reset explicitly replaces that request too.
+
+See [Power cap in watts](#power-cap-in-watts).
+
+</details>
+
+<details>
+<summary><strong>Live watts are below the applied watt cap</strong></summary>
+
+The cap limits consumption; it does not force the GPU to draw that much power.
+A lower percentage setting, workload, temperature or another GPU limit can hold
+consumption below it. Compare the two power settings before raising either one.
+
+</details>
+
+<details>
+<summary><strong>An older EXE refuses my profiles after saving a watt cap</strong></summary>
+
+The older build cannot read the new profile format and rejects that GPU's whole
+document. Use v0.43 or keep a separate copy of the document saved before using
+the watt-cap setting. The first save in the new format keeps a
+`.before-power-cap.json` backup beside the document; do not discard your current
+profiles while recovering an older copy.
+
+See [Power controls in profiles](#power-controls-in-profiles).
+
+</details>
 
 <details>
 <summary><strong>The slider moves, but the GPU does not change</strong></summary>

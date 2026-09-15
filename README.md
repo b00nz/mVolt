@@ -30,8 +30,13 @@ currently downloadable version.
 - **Profile fixes:** ordinary percentage profiles no longer require an unrelated
   watt-cap read to succeed. Snapshots captured without a cap can be applied after
   the cap has been reset.
+- **Range validation:** core, memory and other supported controls use current
+  driver bounds consistently through inputs, profiles and Apply. Fixed driver
+  ranges are accepted; missing bounds are not replaced with guessed ranges.
 - **Window and input fixes:** saved narrow window sizes are restored, with fixes
   for slider/input redraw and startup window placement.
+- **Startup timing:** a 10-second logon delay and 10 seconds between readiness
+  checks, retaining two successful checks and the 60-second readiness timeout.
 
 [Watt-cap guide](docs/guide.md#power-cap-in-watts) ·
 [Power controls in profiles](docs/guide.md#power-controls-in-profiles)
@@ -47,9 +52,8 @@ currently downloadable version.
   Flatten above, undo/redo, a live operating-point marker, and immediate
   voltage-point or maximum-clock locks.
 - **Power and cooling:** percentage power limit and an additional watt cap,
-  Voltage Boost, NVVDD/MSVDD OCP,
-  shared or individual fan-channel duty within the driver's reported limits,
-  and temperature-based fan curves.
+  Voltage Boost, NVVDD/MSVDD OCP, shared or individual fan-channel duty within
+  the driver's reported limits, and temperature-based fan curves.
 - **Monitoring:** rail and ADC readings, clock graphs, power, P-states,
   temperatures, boost-limit reasons, memory pressure and PCIe traffic.
 - **Dashboard:** collapsible sections, optional Quick tuning pins, tile
