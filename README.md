@@ -17,29 +17,39 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **mVolt+ v0.43**. Check the release page for the
-currently downloadable version.
+This README and the guide cover **mVolt+ v0.44** and the **v0.45 prerelease**
+changes below. Check the release page for the currently downloadable version.
 
-## In v0.43
+## In v0.45 prerelease
 
-- **Power cap in watts:** set an additional watt limit, compare Applied and Live
-  readings, and use Reset to return to percentage control.
-- **Greater driver compatibility:** support for different power-control and
-  telemetry formats across the R591, R595, R596, R610 and R616 driver families.
-  Individual features still depend on the GPU and driver.
-- **Profile fixes:** ordinary percentage profiles no longer require an unrelated
-  watt-cap read to succeed. Snapshots captured without a cap can be applied after
-  the cap has been reset.
-- **Range validation:** core, memory and other supported controls use current
-  driver bounds consistently through inputs, profiles and Apply. Fixed driver
-  ranges are accepted; missing bounds are not replaced with guessed ranges.
-- **Window and input fixes:** saved narrow window sizes are restored, with fixes
-  for slider/input redraw and startup window placement.
-- **Startup timing:** a 10-second logon delay and 10 seconds between readiness
-  checks, retaining two successful checks and the 60-second readiness timeout.
+- **Recovery:** NVIDIA management calls run in private helper processes so a
+  library crash does not close mVolt+. Periodic clock reads run in the background,
+  and repeated failures back off before retries stop for the session.
+- **Command line:** direct thermal-input commands, thermal status, independent
+  requested/enforced power readings and stable adapter IDs.
 
-[Watt-cap guide](docs/guide.md#power-cap-in-watts) ·
-[Power controls in profiles](docs/guide.md#power-controls-in-profiles)
+## In v0.44
+
+- **Thermal inputs:** fixed temperatures for channels 1, 3, 4 and 5 that feed
+  the GPU's voltage/frequency calculations, with profiles and individual resets.
+- **Memory timings:** a read-only bank table in Telemetry → Memory / PCIe on
+  supported GB202 hardware, with explanations of each timing.
+- **Choose your controls:** three first-start visibility presets, with Voltage boost, fans and
+  ordinary power controls in every preset. Change individual tiles anytime in
+  Sections → Show/Hide tiles.
+- **Profiles:** a resizable manager, reorganized actions and shortcuts that
+  save immediately without overwriting tuning values.
+- **Recovery and startup:** manual Apply after a driver reset no longer requires
+  changing logon preferences. An interrupted manual benchmark Apply no longer
+  blocks the selected logon profile. After a BIOS flash, startup uses only the
+  current BIOS's saved profile, or opens without applying if none is selected.
+- **Interface:** Shift+Left/Right point selection in the V/F editor, Midnight as
+  the default theme, a Light theme, and fixes for window focus and repainting.
+- **Overview:** thermal inputs and enforced/requested power limits together.
+
+[Preset table](docs/guide.md#first-start-and-tile-presets) ·
+[Thermal inputs](docs/guide.md#thermal-inputs) ·
+[Profile guide](docs/guide.md#profiles)
 
 ## Features
 
@@ -48,14 +58,16 @@ currently downloadable version.
   Both views edit offsets; evaluated voltage limits remain visible.
 - **Clocks:** core, memory, XBAR, SYS and video offsets; per-domain voltage
   demand; core/fabric clock propagation ratio; GPU clock range and Boost lock.
-- **V/F editor:** wheel zoom, drag to pan when zoomed, keyboard point editing,
-  Flatten above, undo/redo, a live operating-point marker, and immediate
+- **V/F editor:** wheel zoom, right-drag to pan when zoomed, keyboard selection editing,
+  Shift+Left/Right range selection, Flatten above, undo/redo, a live operating-point marker, and immediate
   voltage-point or maximum-clock locks.
 - **Power and cooling:** percentage power limit and an additional watt cap,
   Voltage Boost, NVVDD/MSVDD OCP, shared or individual fan-channel duty within
   the driver's reported limits, and temperature-based fan curves.
 - **Monitoring:** rail and ADC readings, clock graphs, power, P-states,
-  temperatures, boost-limit reasons, memory pressure and PCIe traffic.
+  temperatures, boost-limit reasons, memory timings, memory pressure and PCIe traffic.
+- **Thermal inputs:** independent fixed temperature inputs for channels 1/3/4/5,
+  feeding the GPU's VFE calculations. Default restores the GPU-provided input.
 - **Dashboard:** collapsible sections, optional Quick tuning pins, tile
   visibility, themes, interface sizing and explanatory tooltips.
 - **Multiple GPUs:** adapter selection with separate profiles and preferences
@@ -76,12 +88,14 @@ dashboard's current switches.
 
 The first new-profile save asks which mode to use, including after upgrading
 from v0.40. The choice is remembered for this GPU and can be changed in
-**Settings → General → New profile mode** or overridden for one save. Existing
+**Profile Manager → New profile mode** or overridden for one save. Existing
 profiles keep their saved mode.
 
 Saving does not apply anything. **Load for editing** stages targets;
 **Apply profile**, a header selection or a global shortcut applies immediately.
 Profiles can also be selected for application at Windows logon.
+Editing an existing profile's shortcut saves the binding immediately; it does
+not recapture tuning values or require Overwrite selected.
 
 Applying a normal watt-cap profile leaves the existing percentage limit in place;
 the lower limit governs. Applying a percentage profile releases a cap owned by
@@ -95,15 +109,18 @@ both profile modes. Saved V/F curve edits remain part of profiles.
 
 ## Tuning Overview
 
-Overview shows current settings, including the configured power limit in watts,
-alongside the profile and VBIOS identity. That limit is separate from measured
-power consumption. **Copy summary** copies the readback; **Always on top** keeps
+Overview shows current settings, including thermal inputs in channel order
+1/3/4/5 and enforced/requested power limits in watts, alongside the profile and
+VBIOS identity. Power limits are separate from measured power consumption.
+**Copy summary** copies the readback; **Always on top** keeps
 the window visible beside another application.
 
 ## Telemetry and RTSS
 
 Telemetry groups readings into Rails, Clocks, Power, P-states, Temperatures,
-Boost limits and Memory / PCIe. Clock graphs show values on hover. Hotspot,
+Boost limits and Memory / PCIe, opening on Rails by default. Memory / PCIe
+includes read-only memory timings on supported GB202 hardware.
+Clock graphs show values on hover. Hotspot,
 firmware clock history and detailed limit reasons appear where supported.
 
 RivaTuner Statistics Server is optional and only needed for its on-screen
