@@ -17,35 +17,28 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **mVolt+ v0.44** and the **v0.45 prerelease**
-changes below. Check the release page for the currently downloadable version.
+This README and the guide cover **mVolt+ v0.46.1**. Check the release page for
+the currently downloadable version.
 
-## In v0.45 prerelease
+## v0.46.1 highlights
 
-- **Recovery:** NVIDIA management calls run in private helper processes so a
-  library crash does not close mVolt+. Periodic clock reads run in the background,
-  and repeated failures back off before retries stop for the session.
-- **Command line:** direct thermal-input commands, thermal status, independent
-  requested/enforced power readings and stable adapter IDs.
-
-## In v0.44
-
-- **Thermal inputs:** fixed temperatures for channels 1, 3, 4 and 5 that feed
-  the GPU's voltage/frequency calculations, with profiles and individual resets.
-- **Memory timings:** a read-only bank table in Telemetry → Memory / PCIe on
-  supported GB202 hardware, with explanations of each timing.
-- **Choose your controls:** three first-start visibility presets, with Voltage boost, fans and
-  ordinary power controls in every preset. Change individual tiles anytime in
-  Sections → Show/Hide tiles.
-- **Profiles:** a resizable manager, reorganized actions and shortcuts that
-  save immediately without overwriting tuning values.
-- **Recovery and startup:** manual Apply after a driver reset no longer requires
-  changing logon preferences. An interrupted manual benchmark Apply no longer
-  blocks the selected logon profile. After a BIOS flash, startup uses only the
-  current BIOS's saved profile, or opens without applying if none is selected.
-- **Interface:** Shift+Left/Right point selection in the V/F editor, Midnight as
-  the default theme, a Light theme, and fixes for window focus and repainting.
-- **Overview:** thermal inputs and enforced/requested power limits together.
+- **Thermal inputs:** fixed VFE and memory-temperature inputs, profile support,
+  a staged LN2 boost preset and individual or all-channel resets.
+- **V/F editor:** select and adjust multiple points with the keyboard, flatten
+  without changing the view, and show live readings when needed.
+- **Telemetry and Overview:** read-only memory timings on supported GB202 GPUs,
+  grouped voltage values, thermal inputs and enforced/requested power limits.
+- **Choose your layout:** three first-start presets, Show/Hide tiles, dark and
+  light themes, and interface sizing in 5% steps.
+- **Profiles and startup:** a resizable manager, scrollable profile menus,
+  shortcuts that save immediately, and improved recovery after driver resets
+  and BIOS changes.
+- **Smoother interface:** reduced flashing, better narrow-window layouts and
+  section controls that preserve your scroll position.
+- **Compatibility:** improved support for older NVIDIA GPUs and drivers,
+  including Voltage boost.
+- **Command line:** thermal-input controls, expanded status readings and stable
+  GPU identifiers for scripts.
 
 [Preset table](docs/guide.md#first-start-and-tile-presets) ·
 [Thermal inputs](docs/guide.md#thermal-inputs) ·
@@ -66,8 +59,8 @@ changes below. Check the release page for the currently downloadable version.
   the driver's reported limits, and temperature-based fan curves.
 - **Monitoring:** rail and ADC readings, clock graphs, power, P-states,
   temperatures, boost-limit reasons, memory timings, memory pressure and PCIe traffic.
-- **Thermal inputs:** independent fixed temperature inputs for channels 1/3/4/5,
-  feeding the GPU's VFE calculations. Default restores the GPU-provided input.
+- **Thermal inputs:** independent fixed inputs for channels 1/3/4/5 feeding VFE,
+  plus channel 2 for memory temperature. Default restores the GPU-provided input.
 - **Dashboard:** collapsible sections, optional Quick tuning pins, tile
   visibility, themes, interface sizing and explanatory tooltips.
 - **Multiple GPUs:** adapter selection with separate profiles and preferences
@@ -86,8 +79,8 @@ dashboard's current switches.
 | **Normal / Only enabled settings** (default) | Applies saved-enabled targets, including edits that were pending when saved. Saved-disabled and absent settings stay untouched. |
 | **Full snapshot** | Restores captured applied values, including controls whose switches were off. Pending edits are not saved. Absent settings stay untouched. |
 
-The first new-profile save asks which mode to use, including after upgrading
-from v0.40. The choice is remembered for this GPU and can be changed in
+The first new-profile save asks which mode to use. The choice is remembered
+for this GPU and can be changed in
 **Profile Manager → New profile mode** or overridden for one save. Existing
 profiles keep their saved mode.
 
@@ -109,8 +102,8 @@ both profile modes. Saved V/F curve edits remain part of profiles.
 
 ## Tuning Overview
 
-Overview shows current settings, including thermal inputs in channel order
-1/3/4/5 and enforced/requested power limits in watts, alongside the profile and
+Overview provides a compact view of your applied tuning settings, including
+thermal inputs and enforced/requested power limits, alongside the profile and
 VBIOS identity. Power limits are separate from measured power consumption.
 **Copy summary** copies the readback; **Always on top** keeps
 the window visible beside another application.
@@ -120,8 +113,8 @@ the window visible beside another application.
 Telemetry groups readings into Rails, Clocks, Power, P-states, Temperatures,
 Boost limits and Memory / PCIe, opening on Rails by default. Memory / PCIe
 includes read-only memory timings on supported GB202 hardware.
-Clock graphs show values on hover. Hotspot,
-firmware clock history and detailed limit reasons appear where supported.
+Clock graphs show values on hover. Hotspot, firmware clock history and detailed
+limit reasons appear where supported.
 
 RivaTuner Statistics Server is optional and only needed for its on-screen
 overlay. Choose the readings in **Settings → Monitoring**.
@@ -134,12 +127,12 @@ overlay. Choose the readings in **Settings → Monitoring**.
 - **RTX 40 / Ada, RTX 30 / Ampere, RTX 20 / Turing and GTX 10 / Pascal:**
   experimental support, checked per control and sensor.
 
-Each control checks for a supported interface and valid driver data. A working
-clock or power control does not imply support for every voltage rail or sensor.
-Power-control and detailed-telemetry readers support formats used across the
-R591, R595, R596, R610 and R616 families. Selection follows the interface's
-response, not a driver-version allowlist; this is not a guarantee for every
-release or board in those families.
+Compatibility is checked separately for each control and sensor. Support
+includes older NVIDIA driver interfaces; available features vary by GPU and
+driver. Voltage boost may be available even when voltage-limit editing is not.
+
+Readings the driver does not provide remain unavailable. Thermal temperatures
+that cannot be verified are labelled unconfirmed.
 See [compatibility and multiple GPUs](docs/guide.md#compatibility-and-multiple-gpus).
 
 ## Safety and persistence
@@ -165,14 +158,9 @@ rating.
 .\mVolt+.exe --read-only
 ```
 
-Direct CLI tuning applies immediately. Rail commands accept signed offsets in
-mV: `--nvvdd-offsets VMIN,REL,ALT[,OV]` and
-`--msvdd-offsets VMIN,REL,ALT[,OV]`. ALT is the limit labelled **ALT/OP** in the UI.
-
-Use `--power-cap-watts WATTS` for an additional watt cap, or
-`--return-to-percentage` to release it without changing the percentage setting.
-New watt targets start at 1 W, accept up to three decimal places, and cannot
-exceed the reported maximum. This feature does not require a separate kernel driver.
+Use the command line to inspect GPU status, select an adapter, apply a saved
+profile or set tuning values directly. Direct CLI tuning applies immediately.
+The guide covers all options, units and automation examples.
 
 [CLI reference and automation](docs/guide.md#command-line-and-automation)
 
