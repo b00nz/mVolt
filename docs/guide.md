@@ -1,6 +1,6 @@
 # mVolt+ user guide
 
-**For mVolt+ v0.46.1** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
+**For mVolt+ v0.47.1** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
 
 This guide covers dashboard controls, profiles, monitoring and startup. Expand
 a section for details. Screenshots are from an RTX 5090; some controls may differ
@@ -16,7 +16,7 @@ in the current version. The values shown are not recommended tuning settings.
 | [Power cap in watts](#power-cap-in-watts) | Watt targets, percentage limits and Reset |
 | [Thermal inputs](#thermal-inputs) | Fixed inputs to VFE, Default, Reset and profiles |
 | [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT/OP, OV, linked editing and MAX |
-| [V/F Curve Editor](#vf-curve-editor) | Zoom, pan, point edits, live marker and locks |
+| [V/F Curve Editor](#vf-curve-editor) | Core and MSVDD curves, point edits, profiles and Core locks |
 | [Fan control and persistence](#fan-control-and-persistence) | Fixed duty, firmware auto, curves and hysteresis |
 | [Profiles](#profiles) | Saving, applying, full snapshots, comparisons and shortcuts |
 | [Startup and tray](#startup-and-tray) | Logon readiness, recovery and closing behavior |
@@ -168,8 +168,7 @@ the global offset while preserving the separate regional curve edits. A higher
 request can reduce stability without increasing achieved performance.
 
 The allowed global offset follows the driver's current range, including when
-saving or applying profiles. A separate historical V/F editor limit does not
-restrict an otherwise valid global offset.
+saving or applying profiles.
 
 </details>
 
@@ -209,6 +208,10 @@ adjustment unavailable; mVolt+ does not invent a wider range.
 MSVDD supplies the GPU fabric. Its voltage and current controls are separate
 from VRAM tuning in the Memory section.
 
+On supported hardware, the [V/F editor](#vf-curve-editor) also offers separate
+XBAR, SYS and Video curves. Their regional adjustments work alongside the
+global clock offsets below.
+
 <details>
 <summary><strong>MSVDD voltage limits</strong> — fabric-rail voltage-policy offsets</summary>
 
@@ -229,7 +232,8 @@ Changes the voltage demand for the crossbar fabric domain. Positive values ask
 for more voltage; negative values ask for less. Shared rail demands and active
 voltage limits can keep actual voltage from following the request directly.
 
-It is independent of the XBAR clock offset and MSVDD rail-limit offsets.
+It is independent of the XBAR clock offset, regional curve adjustments and
+MSVDD rail-limit offsets.
 Reset clears this domain's voltage-demand offset.
 
 </details>
@@ -243,7 +247,7 @@ fabric V/F relationship and other GPU limits can prevent the requested change
 from appearing in the measured clock.
 
 Use the XBAR **Live** reading or Telemetry's measured clocks to inspect the result.
-Reset clears this clock offset.
+Reset clears this global clock offset while preserving regional curve edits.
 
 </details>
 
@@ -265,7 +269,8 @@ Reset clears the demand offset.
 Shifts the GPU system clock request. Positive values request a higher frequency;
 negative values request a lower one. The driver may round the offset to a
 supported clock step, while workload and voltage/power limits affect measured
-speed. Compare **Applied** with **Live**; Reset clears the offset.
+speed. Compare **Applied** with **Live**; Reset clears the global offset while
+preserving regional curve edits.
 
 </details>
 
@@ -287,7 +292,7 @@ Shifts the clock request for the GPU video domain. Positive values request a
 higher frequency and negative values a lower one. Whether this changes measured
 speed or workload performance depends on the active task and other GPU limits.
 
-Reset clears the offset.
+Reset clears the global offset while preserving regional curve edits.
 
 </details>
 
@@ -319,28 +324,6 @@ tools are not always directly comparable. Reset clears the memory offset.
 
 Targets are checked against the driver's current offset range. Profiles and
 the CLI use the same range checks as dashboard Apply.
-
-</details>
-
-<details>
-<summary><strong>NVVDD / MSVDD clock propagation ratio</strong> — the core/fabric clock relationship</summary>
-
-Sets the clock relationship between the NVVDD core and MSVDD fabric domains.
-A lower ratio requests less fabric frequency relative to the core; a higher
-ratio requests more. Because the relationship is bidirectional, constraints on
-either domain can influence the other's clock request.
-
-Actual frequencies remain subject to the GPU's clock, voltage and power limits.
-This adjusts clock propagation, not either rail's voltage directly. A requested
-ratio is also distinct from the **Live** ratio calculated from measured clocks.
-
-Apply checks the ratio actually retained by the driver. If the driver does not
-report a default, Reset is unavailable; otherwise supported adjustment remains
-available. Missing range information is not shown as a guessed driver range.
-
-To see the relationship in practice, use a low power limit under a steady load
-and watch how XBAR, SYS and video clocks change relative to the core as you
-adjust the ratio.
 
 </details>
 
@@ -392,6 +375,40 @@ be available on older GeForce cards. Availability depends on the GPU and driver.
 </details>
 
 <details>
+<summary><strong>Thermal inputs</strong> — fixed temperatures for VFE calculations</summary>
+
+Sets independent fixed inputs for channels 1–5. **Default** leaves the input to
+the GPU; **Reset** restores it immediately. Channel 1 replaces reported GPU
+temperature; a running software fan curve uses that fixed temperature. Channel 2
+replaces reported memory temperature.
+
+See [Thermal inputs](#thermal-inputs) for field behavior, participation and profiles.
+
+</details>
+
+<details>
+<summary><strong>NVVDD / MSVDD clock propagation ratio</strong> — the core/fabric clock relationship</summary>
+
+Sets the clock relationship between the NVVDD core and MSVDD fabric domains.
+A lower ratio requests less fabric frequency relative to the core; a higher
+ratio requests more. Because the relationship is bidirectional, constraints on
+either domain can influence the other's clock request.
+
+Actual frequencies remain subject to the GPU's clock, voltage and power limits.
+This adjusts clock propagation, not either rail's voltage directly. A requested
+ratio is also distinct from the **Live** ratio calculated from measured clocks.
+
+Apply checks the ratio actually retained by the driver. If the driver does not
+report a default, Reset is unavailable; otherwise supported adjustment remains
+available. Missing range information is not shown as a guessed driver range.
+
+To see the relationship in practice, use a low power limit under a steady load
+and watch how XBAR, SYS and video clocks change relative to the core as you
+adjust the ratio.
+
+</details>
+
+<details>
 <summary><strong>Fan control</strong> — fixed duty for all fans or individual channels</summary>
 
 Sets a fixed fan duty, in percent. Each slider follows a driver-reported fan
@@ -409,18 +426,6 @@ hardware and operating limits, so duty percent is not an RPM percentage.
 
 **Reset to auto** immediately returns all channels to firmware control. Fixed
 duty remains after exit. [Compare the fan modes](#fan-control-and-persistence).
-
-</details>
-
-<details>
-<summary><strong>Thermal inputs</strong> — fixed temperatures for VFE calculations</summary>
-
-Sets independent fixed inputs for channels 1–5. **Default** leaves the input to
-the GPU; **Reset** restores it immediately. Channel 1 replaces reported GPU
-temperature; a running software fan curve uses that fixed temperature. Channel 2
-replaces reported memory temperature.
-
-See [Thermal inputs](#thermal-inputs) for field behavior, participation and profiles.
 
 </details>
 
@@ -623,10 +628,14 @@ this Reset behavior later.”
 
 ## V/F Curve Editor
 
-The editor changes the core frequency requested at individual voltage bins.
+The editor changes the frequency requested at individual voltage points.
+Choose **NVVDD → Core** or **MSVDD → XBAR, SYS or Video** above the graph.
+Available curves depend on your GPU and driver.
+
 The horizontal axis is voltage in **mV**; the vertical axis is frequency in
-**MHz**. Hovering a point shows voltage and target frequency. The selection panel
-separates global core offset, point offset and the effective shift.
+**MHz**. Each curve keeps its pending edits, selection, view and Undo/Redo history
+when you switch domains. Opening or switching a curve does not apply anything.
+Hover the instruction line for help; the graph stays clear of instruction tooltips.
 
 ![V/F Curve Editor](../assets/mvolt-vf-curve-editor.png)
 
@@ -644,13 +653,45 @@ separates global core offset, point offset and the effective shift.
 | Selected MHz → Set point | Stages the entered frequency for the selected point |
 | Point offset → Set offset | Stages the regional frequency offset for selected points |
 | Flatten above | Stages a flat upper curve from the selected point through higher-voltage bins, preserving the current graph scale |
-| Lock voltage point | Immediately requests the selected point's voltage bin; click Release voltage point to release it |
-| Limit max clock | Immediately caps core frequency at the selected point's displayed frequency, including pending edits; click Release clock limit to release it |
+| Lock voltage point (Core only) | Immediately requests the selected point's voltage bin; click Release voltage point to release it |
+| Limit max clock (Core only) | Immediately caps core frequency at the selected point's displayed frequency, including pending edits; click Release clock limit to release it |
 | Undo / Redo | Restores pending edits; a drag is one history step |
-| Apply | Writes and verifies the pending curve |
-| Discard | Returns to the currently applied curve without resetting it |
-| Reset V/F curve | Immediately clears regional point offsets, preserving separate global settings |
-| Show live / Hide live | Shows or hides the live operating-point marker and its readout for this app session |
+| Apply | Writes and verifies the selected curve; other curves' pending edits stay pending |
+| Discard | Returns the selected curve to its applied state without resetting it |
+| Reset V/F curve | Immediately clears the selected curve's regional adjustments, preserving its global clock and voltage-demand offsets |
+| Show live / Hide live (Core only) | Shows or hides the live operating-point marker and its readout for this app session |
+
+Editing an MSVDD curve automatically includes it in dashboard Apply and normal
+profile saves. The editor's **Apply** acts
+on its selected curve; dashboard **Apply changes** can apply included edits
+across curves and tiles together.
+
+Ctrl+Z and Ctrl+Y work when the graph has focus. Applying, discarding or refreshing
+the curve starts a new edit history. Click the graph before using its arrow keys.
+While a numeric field has focus, Left/Right move its text caret instead of
+selecting another curve point.
+
+### Global offsets and curve adjustments
+
+The Core, XBAR, SYS and Video clock-offset tiles change their domain's global
+frequency offset. Curve edits adjust individual points or regions alongside
+that global setting. **Set offset** replaces the selected points' regional
+adjustment; applying the same value again does not add it again.
+
+Resetting a curve preserves its global clock offset and voltage demand. Resetting
+one curve does not reset the others. Applied curve edits remain after mVolt+
+exits until changed or cleared by the driver.
+
+Voltage demand is separate from frequency adjustment. Core voltage demand can
+shift the displayed Core voltage axis. MSVDD curves use reference voltage points,
+so changing XBAR/SYS/Video voltage demand does not move their horizontal axis or
+rewrite their point offsets. Shared rail demands and other GPU limits determine
+the voltage and clocks actually reached; use Telemetry to inspect those readings.
+
+**Flatten above does not lock voltage.** It shapes frequency at higher-voltage
+points; the GPU still selects an operating point under its active limits.
+
+### Core live readings and locks
 
 The live marker uses the core ADC voltage average, matching the dashboard header,
 and the current driver-reported core clock. It shows measured operation rather
@@ -659,7 +700,7 @@ Missing or stale readings hide the marker; readings outside the zoomed view are
 not pinned to the graph edge. Zooming and panning update both axes without
 changing settings.
 
-The editor opens without automatically selecting the first point. Live readings
+The editor opens without automatically selecting the first point. Core live readings
 start hidden; **Show live** enables them and keeps that choice for this app
 session. **Fit curve** restores the full view after flattening or navigating.
 
@@ -676,19 +717,6 @@ limits still apply, so a lock does not guarantee the measured clock or voltage.
 The lock buttons act immediately and are not saved in profiles or full snapshots.
 They remain applied after exit until released or cleared by the driver.
 **Reset all** releases them; **Reset V/F curve** only resets curve offsets.
-
-Ctrl+Z and Ctrl+Y work when the graph has focus. Applying, discarding or refreshing
-the curve starts a new edit history.
-Click the graph before using its arrow keys. While a numeric field has focus,
-Left/Right move its text caret instead of selecting another curve point.
-
-Global core clock offset and regional V/F offsets stack. Core voltage demand can
-also affect the displayed voltage axis. Voltage bins are not moved by dragging;
-the editor changes frequency offsets. Driver clock steps may normalize the result.
-
-**Flatten above does not set an absolute voltage lock.** It shapes frequency at
-higher-voltage points; the GPU still selects an operating point under its active
-limits. Applied V/F edits remain after exit until changed or cleared by the driver.
 
 ## Fan control and persistence
 
@@ -785,6 +813,27 @@ A snapshot can restore a stock board-power limit even if that tile was disabled
 at capture, provided that stock limit was actually read then. Disabling a tile
 is not evidence that its value is stock.
 
+### Curves in profiles
+
+Core, XBAR, SYS and Video curves are saved separately. Normal profiles save
+included curve targets, including pending edits. Full snapshots capture the
+currently applied curves when saved or overwritten, excluding pending changes.
+Curves are included when applying the profile from the GUI, a shortcut, at
+logon or through the CLI.
+
+A profile without a particular curve leaves it unchanged. For example, an older
+profile with no XBAR curve neither resets the current XBAR curve nor shows an
+XBAR difference in **Differences from applied**. A saved-disabled curve also
+stays untouched in normal mode.
+
+To save a reset curve in a full snapshot, select that curve, use **Reset V/F curve**,
+then save or overwrite the snapshot. Reset each curve you want to clear.
+Merely opening a curve or disabling a control does not reset it.
+
+Profiles containing MSVDD curves need a version that supports them. Keep a backup
+before returning to an older release. A saved curve that no longer matches the
+selected GPU's curve is refused rather than applied to different points.
+
 ### Power controls in profiles
 
 Normal profiles save the enabled watt target, including pending edits. Disabled
@@ -829,7 +878,8 @@ release. Documents without a watt-cap entry retain their previous format.
 | Restore backup | Restores the saved profile document backup without applying it |
 | Delete | Removes the selected profile after confirmation; applied settings stay in place |
 
-The header profile menu applies immediately. After an apply, mVolt+ can recognize
+The header profile menu applies immediately. Long menus scroll, with **Manage
+profiles** at the top when scrolling is needed. After an apply, mVolt+ can recognize
 the profile on the next launch if readback still matches, without applying it
 again. **Custom** means no saved profile is currently identified as active.
 
@@ -1049,15 +1099,14 @@ in **Settings → Monitoring**.
 
 ![Tuning Overview](../assets/mvolt-overview.png)
 
-Overview shows all settings in two columns, including stock values, unavailable
-fields and values whose dashboard switches are disabled. Its header identifies
-the GPU, recognized profile and VBIOS. The power-limit row shows **enforced /
+Overview provides a compact view of applied settings, including stock values,
+unavailable readings and settings whose dashboard switches are disabled. It
+identifies the GPU, recognized profile and VBIOS. The power-limit row shows **enforced /
 requested** watts where available, separate from measured power consumption.
 Thermal inputs share one row in channel order **1 / 2 / 3 / 4 / 5**, with values
-separated by `/`; Default means the corresponding fixed input is off.
-Both columns have the same number of rows. Each rail's VMIN / REL / ALT/OP / OV
-offsets are grouped together. The title shows the current version; other
-interface windows omit it.
+separated by `/`; **Def.** means the corresponding fixed input is off.
+Each rail's voltage offsets are grouped together, and Core, XBAR, SYS and Video
+curves have separate summaries showing adjusted points out of the total.
 
 **Copy summary** copies current applied/readback settings. **Always on top** keeps
 the window above other applications. Pending dashboard targets are not presented
@@ -1096,10 +1145,9 @@ the dashboard's **Reset all** to reset GPU tuning instead.
 Enter it and click **Set interval**. Shorter intervals update more often and cost
 more work; this does not change the separate firmware sample interval.
 
-The manual **Pause polling** button has been removed. **Pause when minimized or
-in tray** pauses general monitoring unless a visible monitoring surface or overlay
-needs it. An active fan curve still performs its required temperature checks.
-Internal suspension during writes and reconnect remains automatic.
+**Pause when minimized or in tray** pauses general monitoring unless a visible
+monitoring window or overlay needs it. An active fan curve still performs its
+required temperature checks.
 
 To use RTSS, run RivaTuner Statistics Server, enable **Show telemetry in the RTSS
 overlay**, and select the metadata/rail/clock lines you want. RTSS must display
@@ -1115,9 +1163,10 @@ colors. Changes update the app's windows and are saved for the selected GPU.
 
 Click the leading **−/+** beside a section heading to collapse or expand it.
 The current scroll position is retained, clamped if the remaining content is
-shorter. **Sections → Show/Hide tiles**
-opens a grouped submenu with checkmarks. Sections also offers pinning and
-collapse controls. Pinning moves a card to Quick tuning; hiding removes
+shorter. **Sections → Show/Hide tiles** opens a grouped submenu with checkmarks.
+Changing visible tiles keeps your chosen window size, including a narrow
+single-column layout. Sections also offers pinning and collapse controls.
+Pinning moves a card to Quick tuning; hiding removes
 it from view. **Hiding, collapsing and pinning do not change whether a setting
 is applied or stored in a profile.** Apply still includes hidden enabled cards.
 New configurations have no pinned cards, so Quick tuning appears only after you
@@ -1175,9 +1224,9 @@ request instead of selecting another card.
 
 ## Command line and automation
 
-Direct thermal-input commands, stable IDs in adapter listings and expanded
-thermal/power status fields are available in this version. Use
-`--version` and `--help` to check the commands supported by your executable.
+The CLI can inspect readings, apply saved profiles and set tuning values or
+domain curves directly. Use `--version` and `--help` to check the commands
+supported by your executable.
 
 Run the read-only commands from PowerShell in the executable's directory:
 
@@ -1227,7 +1276,7 @@ They do not create a dashboard draft. Unspecified controls are left untouched.
 | `--power-cap-watts` | Additional watt cap, from 1 W through the reported maximum; up to three decimal places |
 | `--return-to-percentage` | Releases the additional cap without changing the percentage setting; no argument |
 | `--boost` | Voltage Boost percentage |
-| `--msvdd-clock-ratio` | NVVDD/MSVDD clock propagation ratio; retains this historical option name |
+| `--msvdd-clock-ratio` | NVVDD/MSVDD clock propagation ratio |
 | `--nvvdd-ocp` / `--msvdd-ocp` | Rail output-current limit in amps |
 | `--boost-lock` | `on` or `off`; immediate action, not saved in profiles |
 | `--clock-range` | `MIN,MAX` in MHz, or `default` to release the lock |
@@ -1266,6 +1315,39 @@ with tuning options, and `--profile` cannot be combined with direct tuning.
 
 </details>
 
+### Domain V/F commands
+
+Use `--vf-curve xbar`, `sys` or `video` to read that curve's points and selection
+keys without changing anything:
+
+```powershell
+.\mVolt+.exe --vf-curve xbar | Out-Host
+```
+
+Add `--vf-offset` to set a regional adjustment in MHz, or `--vf-reset` to clear
+regional adjustments. These commands apply immediately and require administrator
+privileges. For example:
+
+```powershell
+# Set every XBAR point's regional offset to -15 MHz.
+.\mVolt+.exe --vf-curve xbar --vf-offset -15 | Out-Host
+# Reset XBAR's regional adjustments, keeping its global clock offset.
+.\mVolt+.exe --vf-curve xbar --vf-reset | Out-Host
+```
+
+Without a point selection, the command affects the whole selected curve. Add
+`--vf-points` with comma-separated `program:voltage_uv` keys copied from the
+read output to limit an offset or Reset to those points. Other points and curves
+remain unchanged. The offset replaces the previous regional value; repeated
+Apply does not accumulate it. The curve's global clock and voltage-demand
+offsets remain separate.
+
+Direct curve commands support XBAR, SYS and Video. To apply saved Core curve
+edits from the CLI, use a profile. Profiles can apply Core and MSVDD curves
+together, with the same participation rules as the GUI.
+
+### Applying saved profiles
+
 To apply an already reviewed profile, replace the name with one saved for the
 selected GPU:
 
@@ -1286,7 +1368,7 @@ behavior for software curves. `--diagnostic` creates a local compatibility repor
 | Profiles and UI preferences | `%LOCALAPPDATA%\mVolt+\profiles\<VBIOS>-<adapter>.json`; up to 64 profiles per document |
 | Profile backup | A `.bak` copy beside the profile document |
 | Backup before the first watt-cap profile save | `.before-power-cap.json` beside the profile document; retained for older-version compatibility |
-| Backup before the first thermal-input profile save | `.before-thermal-inputs.json` beside the profile document; use v0.44 or later to read profiles containing thermal inputs |
+| Backup before the first thermal-input profile save | `.before-thermal-inputs.json` beside the profile document; retained for older-version compatibility |
 | Watt-cap ownership and recovery | Per-adapter `power-cap-<id>.txt` under `%LOCALAPPDATA%\mVolt+`; separate from profiles |
 | Startup/profile logs | Size-limited logs under `%LOCALAPPDATA%\mVolt+` |
 | Clock and boost-reason histories | Recent readings kept while the app runs; cleared on exit |
@@ -1326,8 +1408,8 @@ consumption below it. Compare the two power settings before raising either one.
 <summary><strong>An older EXE refuses my profiles after saving a watt cap</strong></summary>
 
 The older build cannot read the new profile format and rejects that GPU's whole
-document. Use v0.44 or later, or keep a separate copy of the document saved before using
-the watt-cap setting. The first save in the new format keeps a
+document. Use a release that supports the setting, or keep a separate copy saved
+before using the watt-cap setting. The first save in the new format keeps a
 `.before-power-cap.json` backup beside the document; do not discard your current
 profiles while recovering an older copy.
 

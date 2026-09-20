@@ -17,30 +17,26 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **mVolt+ v0.46.1**. Check the release page for
+This README and the guide cover **mVolt+ v0.47.1**. Check the release page for
 the currently downloadable version.
 
-## v0.46.1 highlights
+## v0.47.1 highlights
 
-- **Thermal inputs:** fixed VFE and memory-temperature inputs, profile support,
-  a staged LN2 boost preset and individual or all-channel resets.
-- **V/F editor:** select and adjust multiple points with the keyboard, flatten
-  without changing the view, and show live readings when needed.
-- **Telemetry and Overview:** read-only memory timings on supported GB202 GPUs,
-  grouped voltage values, thermal inputs and enforced/requested power limits.
-- **Choose your layout:** three first-start presets, Show/Hide tiles, dark and
-  light themes, and interface sizing in 5% steps.
-- **Profiles and startup:** a resizable manager, scrollable profile menus,
-  shortcuts that save immediately, and improved recovery after driver resets
-  and BIOS changes.
-- **Smoother interface:** reduced flashing, better narrow-window layouts and
-  section controls that preserve your scroll position.
-- **Compatibility:** improved support for older NVIDIA GPUs and drivers,
-  including Voltage boost.
-- **Command line:** thermal-input controls, expanded status readings and stable
-  GPU identifiers for scripts.
+- **More V/F curves:** edit Core and supported MSVDD XBAR, SYS and Video curves
+  in one editor. Each curve keeps its edits and view when you switch domains.
+- **Profiles and CLI:** save the new curves in profiles or adjust them from the
+  command line. Full snapshots capture the currently applied curves.
+- **Clearer curve editing:** familiar point and region editing, Flatten and
+  Undo/Redo, with help that stays out of the graph's way.
+- **Flexible layout:** changing visible tiles preserves your window size and
+  scroll position. Manage profiles stays reachable in long profile menus.
+- **Smoother interface:** improved profile-list updates and Apply/Reset rendering,
+  with more compact thermal controls and clearer clock labels.
+- **Overview:** separate applied summaries for Core, XBAR, SYS and Video curves.
+- **Startup:** faster detection when the GPU is ready for your logon profile.
 
 [Preset table](docs/guide.md#first-start-and-tile-presets) ·
+[V/F curves](docs/guide.md#vf-curve-editor) ·
 [Thermal inputs](docs/guide.md#thermal-inputs) ·
 [Profile guide](docs/guide.md#profiles)
 
@@ -51,9 +47,10 @@ the currently downloadable version.
   Both views edit offsets; evaluated voltage limits remain visible.
 - **Clocks:** core, memory, XBAR, SYS and video offsets; per-domain voltage
   demand; core/fabric clock propagation ratio; GPU clock range and Boost lock.
-- **V/F editor:** wheel zoom, right-drag to pan when zoomed, keyboard selection editing,
-  Shift+Left/Right range selection, Flatten above, undo/redo, a live operating-point marker, and immediate
-  voltage-point or maximum-clock locks.
+- **V/F editor:** Core and supported XBAR/SYS/Video curves, point and region
+  editing, wheel zoom, right-drag pan, keyboard selection, Flatten and Undo/Redo.
+  Core also offers a live operating-point marker and immediate voltage-point
+  or maximum-clock locks.
 - **Power and cooling:** percentage power limit and an additional watt cap,
   Voltage Boost, NVVDD/MSVDD OCP, shared or individual fan-channel duty within
   the driver's reported limits, and temperature-based fan curves.
@@ -96,15 +93,17 @@ mVolt+ before setting the percentage. Full snapshots capture both applied
 power requests. See [power controls in profiles](docs/guide.md#power-controls-in-profiles).
 
 Boost lock and the V/F editor's point/clock locks are immediate actions, outside
-both profile modes. Saved V/F curve edits remain part of profiles.
+both profile modes. Core, XBAR, SYS and Video curves are saved separately.
+A profile that does not contain a curve leaves that curve unchanged.
 
 [Profile guide](docs/guide.md#profiles) · [Startup and tray](docs/guide.md#startup-and-tray)
 
 ## Tuning Overview
 
 Overview provides a compact view of your applied tuning settings, including
-thermal inputs and enforced/requested power limits, alongside the profile and
-VBIOS identity. Power limits are separate from measured power consumption.
+separate curve summaries, thermal inputs and enforced/requested power limits,
+alongside the profile and VBIOS identity. Power limits are separate from measured
+power consumption.
 **Copy summary** copies the readback; **Always on top** keeps
 the window visible beside another application.
 
@@ -155,12 +154,13 @@ rating.
 .\mVolt+.exe --help | Out-Host
 .\mVolt+.exe --list-gpus | Out-Host
 .\mVolt+.exe --status | Out-Host
+.\mVolt+.exe --vf-curve xbar | Out-Host
 .\mVolt+.exe --read-only
 ```
 
 Use the command line to inspect GPU status, select an adapter, apply a saved
-profile or set tuning values directly. Direct CLI tuning applies immediately.
-The guide covers all options, units and automation examples.
+profile or set tuning values and domain curves directly. Direct CLI tuning
+applies immediately. The guide covers all options, units and automation examples.
 
 [CLI reference and automation](docs/guide.md#command-line-and-automation)
 
