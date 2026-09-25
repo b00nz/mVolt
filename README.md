@@ -17,18 +17,16 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. Read-only commands and the `--read-only` dashboard do not.
 
-This README and the guide cover **mVolt+ v0.47.2**. Check the release page for
+This README and the guide cover **mVolt+ v0.47.3**. Check the release page for
 the currently downloadable version.
 
-## v0.47.2 highlights
+## v0.47.3 highlights
 
-- **V/F curves:** independent switches for Core, XBAR, SYS and Video, plus
-  Show original for a thin reference curve.
-- **Profiles:** fixed unapplied edits being saved; double-click a profile to
-  apply it, and see the current profile in the header and tray menus.
-- **Startup:** choose whether mVolt+ opens visibly or starts in the tray.
-- **Smoother controls:** fixed unwanted resizing, reset flicker and clock-range
-  errors, with simpler tooltips and improved GPU reconnection.
+- **Telemetry:** clearer readings, cleaner layouts and consistent refresh timing.
+- **RTSS:** improved voltage readings in the familiar overlay menu.
+- **Profiles:** clearer previews and smoother profile switching.
+- **Startup:** restored apply-and-exit and improved startup reliability.
+- **Fixes:** V/F editor stability, tray tooltip and profile application in XOC mode.
 
 [Preset table](docs/guide.md#first-start-and-tile-presets) ·
 [V/F curves](docs/guide.md#vf-curve-editor) ·
@@ -75,7 +73,8 @@ restores its saved switches.
 The first new-profile save asks which mode to use. The choice is remembered
 for this GPU and can be changed in
 **Profile Manager → New profile mode** or overridden for one save. Existing
-profiles keep their saved mode.
+profiles keep their saved mode. Enabled-only previews omit disabled settings;
+full snapshots show all captured values.
 
 Saving or overwriting a profile saves applied settings in both modes. Unapplied
 edits stay in the editor. Controls enabled only for an unapplied edit are not
@@ -102,7 +101,8 @@ A profile that does not contain a curve leaves it unchanged.
 
 In **Settings → General**, enable **Start with Windows** and choose whether to
 **Start minimized to tray**. A selected startup profile applies either way;
-mVolt+ stays running for monitoring and software fan control.
+enable **Apply startup profile, then exit** to close after applying it.
+Software fan curves require mVolt+ to stay running.
 
 [Profile guide](docs/guide.md#profiles) · [Startup and tray](docs/guide.md#startup-and-tray)
 

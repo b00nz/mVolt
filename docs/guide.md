@@ -1,6 +1,6 @@
 # mVolt+ user guide
 
-**For mVolt+ v0.47.2** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
+**For mVolt+ v0.47.3** · [Back to the project](../README.md) · [Releases](https://github.com/b00nz/mVolt/releases/latest)
 
 This guide covers dashboard controls, profiles, monitoring and startup. Expand
 a section for details. Screenshots show v0.47.2 on an RTX 5090. The profiles and
@@ -797,7 +797,8 @@ does not appear at startup or when applying an existing profile.
 
 Change the default in **Profile Manager → New profile mode**. The save form's
 **Full snapshot (include disabled settings)** checkbox overrides it for one save.
-Existing profiles keep their mode, including when overwritten.
+Existing profiles keep their mode, including when overwritten. Enabled-only
+previews show only the settings the profile will apply.
 
 **Saving or overwriting a profile saves applied settings in both modes.**
 Unapplied slider values, fan-mode changes, thermal inputs and V/F curve edits
@@ -822,7 +823,7 @@ another profile or application.
 Boost lock and the V/F editor's voltage-point and maximum-clock locks are
 immediate actions, excluded from both modes. Applying a profile does not request
 or release them. The separate **GPU clock range** setting and saved V/F curve
-edits remain part of profiles.
+edits remain part of profiles. Toggling Boost lock keeps the active profile name.
 
 A snapshot can restore the default power limit even if the tile was disabled
 when saved, as long as that was the value reported by the GPU. Disabling a tile
@@ -930,7 +931,9 @@ configuration as **Apply profile**. Shortcut conflicts are shown beside the fiel
 
 In **Settings → General**, **Start with Windows** launches mVolt+ when you sign in.
 **Start minimized to tray** chooses whether it opens in the notification area
-or as a visible window. It stays running in either case.
+or as a visible window. Enable **Apply startup profile, then exit** to close
+after successfully applying your selected startup profile. This option refuses
+profiles with a software fan curve, which requires mVolt+ to stay running.
 
 Select a startup profile in Profile Manager to apply it automatically. Without
 one, the app starts without applying tuning. A successfully applied profile is
@@ -988,24 +991,21 @@ being presented as measured zeroes.
 <details>
 <summary><strong>Rails</strong> — rail voltages and local ADC sensors</summary>
 
-Shows rail voltage readings and individual on-chip ADC sensors. REL, ALT/OP, MAX
-and OV lines describe voltage policy; individual ADC values describe sensor
-readings. Differences can reflect sensor location, calibration, voltage drop
-and sampling time.
+Shows rail voltages and individual on-chip ADC sensors. Each rail card identifies
+whether its value is measured or firmware-requested. REL, ALT/OP, MAX and OV
+describe voltage limits, not measured voltage.
 
-The highlighted ADC has the largest voltage difference from the rail reading.
-This is a voltage comparison, not a hotspot temperature. Unavailable samples
-are ignored. Fuse/gain fields are calibration codes, without voltage or
-percentage units; they are not tuning targets.
+**Calc delta** compares the ADC reading with the firmware-requested voltage.
+The highlighted sensor has the largest deviation. Fuse/gain fields are
+calibration codes, not tuning targets.
 
 </details>
 
 <details>
 <summary><strong>Clocks</strong> — firmware history and measured clock domains</summary>
 
-History graphs show recent programmed clock speeds where available.
-Separate measured-clock rows show current domain measurements.
-Programmed clock history is not a measurement of effective work completed.
+Shows measured clocks and recent firmware clock history. Firmware clocks can
+remain high at idle; they do not measure effective work completed.
 
 Hover a graph line to see the nearest recorded sample's MHz and time relative
 to the latest sample. Hover works while monitoring is paused. Gaps remain gaps;
@@ -1023,10 +1023,9 @@ not fully confirmed. A readable domain is not automatically an adjustable one.
 driver's reported active enforcement value. **Default limit** is the reference
 for 100%. Enforcement can lag a request or reflect another constraint.
 
-Channel cards show reported watts, amps and volts. They can describe different
-points in the same power path, so do not add all cards together as independent
-loads. Channel/type suffixes distinguish repeated rail names. Unknown rail IDs
-remain explicit.
+Channels show reported watts, amps and volts. They can describe different points
+in the same power path, so do not add them together as independent loads. Hover
+for details. Power policies describe limits, separately from measured draw.
 
 Session energy counts observed energy during this monitoring session. It is not
 a persistent lifetime energy meter.
@@ -1051,22 +1050,25 @@ hotspot minus GPU temperature.
 
 Hotspot availability is checked through the driver interface and returned data;
 it is not restricted to one GPU model or driver version. A card can support other
-tuning features without exposing this sensor.
+tuning features without exposing this sensor. A retained **last known** hotspot
+reading is labelled rather than presented as a current sample.
 
 </details>
 
 <details>
 <summary><strong>Boost limits</strong> — why boost is constrained</summary>
 
-Shows reported boost reasons, a recent timeline, observed time spent limited and
-supported domain/rail policy detail. A power or thermal reason can explain why a
-higher clock request does not produce more frequency. Idle and reliability reasons
-can be normal and do not alone establish instability.
+Shows current NVIDIA flags, the driver's core policy and recent limit activity.
+These are separate readings and may differ. Idle and reliability policies can be
+normal.
 
-Reasons can overlap. Time totals cover observed intervals; do not add percentages
-as though they were exclusive portions of runtime. Policy frequencies are
-constraints, separate from measured clocks. Unknown bits and domains remain
-explicit. Detailed named-policy decoding has narrower support than general monitoring.
+Time percentages describe recorded activity, not the current flags. A power flag
+can be active while its percentage is zero. The window follows the refresh
+interval, with a one-second minimum. Reasons can overlap; totals cover observed
+time only.
+
+Domain and rail policies describe constraints, not measured clocks. Hover for
+full details. Unknown reasons remain visible.
 
 Some older drivers provide general boost-limit reasons without the detailed
 domain/rail breakdown. Missing details are shown as unavailable; this does not
@@ -1076,10 +1078,6 @@ mean the GPU is unrestricted.
 
 <details>
 <summary><strong>Memory / PCIe</strong> — memory timings, allocation pressure and bus activity</summary>
-
-**Available VRAM** and **Used VRAM** describe allocation headroom. Evictions,
-promotions and transferred-byte counters describe memory migration. They are
-not memory-error counts or proof that a VRAM overclock is stable.
 
 On supported **GB202** hardware, **Memory timings** shows eight banks and a
 broadcast row in a bordered table. Hover a timing for its explanation:
@@ -1100,6 +1098,10 @@ controls are written. Unavailable banks stay marked unavailable; banks can diffe
 during memory-clock transitions. The broadcast row is a separate reading, not an
 average of the banks.
 
+**Available VRAM** and **Used VRAM** describe allocation headroom. Evictions,
+promotions and transferred-byte counters describe memory migration. They are
+not memory-error counts or proof that a VRAM overclock is stable.
+
 PCIe shows current/maximum link state and traffic in decimal **GB/s**. **TX**
 means GPU to host; **RX** means host to GPU. These are PCIe transfer rates, not
 internal VRAM bandwidth. Direct measured VRAM-bandwidth GB/s is not included
@@ -1112,8 +1114,8 @@ Examine errors and traffic together under comparable conditions.
 </details>
 
 Telemetry updates live and keeps recent readings while mVolt+ is running.
-Closing the app clears that history. Dashboard refresh has its own interval
-in **Settings → Monitoring**.
+Closing the app clears that history. All monitoring views use the refresh
+interval in **Settings → Monitoring**.
 
 ## Overview
 
@@ -1160,18 +1162,18 @@ the dashboard's **Reset all** to reset GPU tuning instead.
 
 ### Monitoring and RTSS
 
-**Refresh interval** controls how often dashboard readings update, from 100 to
-60,000 ms. Enter it and click **Set interval**. Shorter intervals update more
-often and use more resources.
+**Refresh interval** sets how often monitoring and RTSS update: **250–60,000 ms**,
+with **1,000 ms** as the default. Enter it and click **Set interval**. Longer
+intervals reduce updates and also slow software fan-curve responses.
 
 **Pause when minimized or in tray** pauses general monitoring unless a visible
 monitoring window or overlay needs it. An active fan curve still performs its
 required temperature checks.
 
 To use RTSS, run RivaTuner Statistics Server, enable **Show telemetry in the RTSS
-overlay**, and select the GPU information and readings you want. RTSS must display
-its overlay in the target application. The main option and individual lines
-are off by default.
+overlay**, and choose your readings. RTSS must also display its overlay in the
+target application. Overlay options are off by default. Voltage labels identify
+measured or firmware-requested readings.
 
 ### Appearance and dashboard organization
 
