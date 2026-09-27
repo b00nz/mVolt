@@ -1,0 +1,33 @@
+{
+    "version": "0.47.3",
+    "description": "NVIDIA GPU tuning and monitoring: voltage limits, clock offsets, power limits, V/F and fan curves, and saved profiles",
+    "homepage": "https://github.com/b00nz/mVolt",
+    "license": "Freeware",
+    "notes": "Tuning requires administrator privileges. Read-only commands and the --read-only dashboard do not.",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/b00nz/mVolt/releases/download/v0.47.3/mVolt%2B.exe#/mVolt+.exe",
+            "hash": "2ab951d9973a0d2c23e6c9c0223ef6185a266b9b87ae02c1b2a1af145abd6a25"
+        }
+    },
+    "bin": [
+        [
+            "mVolt+.exe",
+            "mvolt"
+        ]
+    ],
+    "shortcuts": [
+        [
+            "mVolt+.exe",
+            "mVolt+"
+        ]
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/b00nz/mVolt/releases/download/v$version/mVolt%2B.exe#/mVolt+.exe"
+            }
+        }
+    }
+}

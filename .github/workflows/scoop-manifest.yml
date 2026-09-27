@@ -1,0 +1,43 @@
+name: Scoop manifest
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (defaults to the latest release)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scoop-manifest
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Update bucket/mvolt.json
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./.github/scripts/Update-ScoopManifest.ps1 -Tag '${{ github.event.release.tag_name || inputs.tag }}'
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet; then
+            echo "Manifest is already up to date."
+            exit 0
+          fi
+          version=$(jq -r .version bucket/mvolt.json)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "scoop: v$version"
+          git push

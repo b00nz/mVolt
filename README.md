@@ -20,6 +20,17 @@ privileges. Read-only commands and the `--read-only` dashboard do not.
 This README and the guide cover **mVolt+ v0.47.3**. Check the release page for
 the currently downloadable version.
 
+### Scoop
+
+```powershell
+scoop bucket add mvolt https://github.com/b00nz/mVolt
+scoop install mvolt/mvolt
+```
+
+This installs `mVolt+.exe`, adds a `mvolt` command and a **mVolt+** Start menu
+shortcut. Update with `scoop update mvolt`. The manifest in
+[`bucket/mvolt.json`](bucket/mvolt.json) follows the latest release.
+
 ## v0.47.3 highlights
 
 - **Telemetry:** clearer readings, cleaner layouts and consistent refresh timing.
@@ -172,6 +183,7 @@ rating.
 Use the command line to inspect GPU status, select an adapter, apply a saved
 profile or set tuning values and domain curves directly. Direct CLI tuning
 applies immediately. The guide covers all options, units and automation examples.
+Scoop installations can use the `mvolt` command from any directory.
 
 [CLI reference and automation](docs/guide.md#command-line-and-automation)
 
