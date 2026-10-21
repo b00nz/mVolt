@@ -68,6 +68,10 @@ In Standard, each card keeps **Apply** beside **Reset**; Apply stays grey until
 that card has a change to apply, including after you return to the applied value.
 Pressing **Enter** in a numeric field applies that control. In the V/F and fan
 editors, Enter applies the current curve or policy.
+**Tab** and **Shift+Tab** move between input fields in reading order and wrap
+at the ends; the arrow keys move to the nearest field. The dashboard scrolls the
+focused field into view. **Page Up** and **Page Down** step a value like the
+card's **+** and **−** buttons. **Esc** closes Settings, About and Review changes.
 Reset is immediate and needs no second Apply.
 Changing a tile or V/F switch alone does not create a pending tuning change.
 Resetting one tile keeps its switches and leaves other unapplied edits alone.
@@ -123,7 +127,7 @@ logon or for command-line/read-only launches.
 | MSVDD OCP limit | — | — | ✓ |
 | NVVDD / MSVDD clock ratio | — | — | ✓ |
 | Thermal inputs | — | — | ✓ |
-| Thermal limit | — | — | ✓ |
+| Thermal limits | — | — | ✓ |
 | **Visible tiles** | **11** | **17** | **22** |
 
 Visibility does not guarantee hardware support; an unsupported control remains
@@ -159,6 +163,9 @@ in Settings. In the offset view, REL and ALT/OP can be linked or edited separate
 [Read the voltage-limit explanation](#voltage-limits-and-measured-voltage) before
 using these controls. Reset restores the rail defaults within the selected
 voltage limits; it does not lock the rail to a fixed voltage.
+
+On driver 621.01 and later the card shows **Unavailable with this driver**.
+See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 
@@ -213,9 +220,9 @@ current limiting reduce core boost sooner; higher values permit more current
 within the other active limits. This is a driver policy setting, not measured
 current or the board's power budget.
 
-The ordinary range is capped at the firmware default where available. **OCP
-unlock** exposes the extended supported range. Reset returns this channel to
-its firmware default.
+The ordinary range is capped at the firmware default where available. **Unlock
+OCP limits** in Settings exposes the extended supported range; it is unavailable on
+driver 621.01 and later. Reset returns this channel to its firmware default.
 
 The driver must report a consistent minimum, default and maximum for this
 channel. A fixed range is valid, but missing or contradictory bounds leave
@@ -242,6 +249,9 @@ Changing fabric voltage limits can constrain fabric clocks; core/fabric clock
 propagation and other limits can influence the result. This card does not directly
 set VRAM voltage. See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage),
 including the different MSVDD Reset default.
+
+On driver 621.01 and later the card shows **Unavailable with this driver**.
+See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 
@@ -324,8 +334,9 @@ constrain fabric boost sooner; higher values permit more current within other
 active limits. It is a driver policy setting, not measured current or proof of
 the regulator's physical protection threshold.
 
-**OCP unlock** expands the editable range beyond the firmware default where
-supported. Reset restores this rail's firmware current limit.
+**Unlock OCP limits** expands the editable range beyond the firmware default
+where supported; it is unavailable on driver 621.01 and later. Reset restores
+this rail's firmware current limit.
 
 </details>
 
@@ -406,6 +417,9 @@ Applied is the requested limit, not measured current. Reset restores the
 driver-reported default. Profiles and Overview include this setting; disabling
 the tile or closing mVolt+ does not undo it.
 
+On driver 621.01 and later only the main limit is used; the auxiliary limit is
+unavailable. See [Driver 621.01 and later](#driver-62101-and-later).
+
 </details>
 
 <details>
@@ -427,10 +441,11 @@ be available on older GeForce cards. Availability depends on the GPU and driver.
 <details>
 <summary><strong>Thermal inputs</strong> — fixed temperatures for VFE calculations</summary>
 
-Sets independent fixed inputs for channels 1–5. **Default** leaves the input to
-the GPU; **Reset** restores it immediately. Channel 1 replaces reported GPU
-temperature, affecting mVolt+ and other tools that use this sensor. Channel 2
-replaces reported memory temperature.
+Sets independent fixed inputs for **GPU temp**, **Hotspot**, **Memory** and
+**Internal 3–5**. **Default** leaves the input to the GPU; **Reset** restores it
+immediately. GPU temp replaces reported GPU temperature, affecting mVolt+ and
+other tools that use this sensor. Memory replaces reported memory temperature.
+Hotspot sets the temperature the hotspot limit sees.
 
 See [Thermal inputs](#thermal-inputs) for entering temperatures, selecting channels
 and saving profiles.
@@ -438,14 +453,25 @@ and saving profiles.
 </details>
 
 <details>
-<summary><strong>Thermal limit</strong> — GPU-temperature limit</summary>
+<summary><strong>Thermal limits</strong> — GPU, hotspot and memory temperature limits</summary>
 
-Adjusts the requested thermal limit in °C. Lower values can make thermal
-limiting reduce clocks sooner. Reset restores the saved pre-edit thresholds.
-This is separate from fixed [Thermal inputs](#thermal-inputs).
+Sets the temperatures where thermal slowdown begins, in °C. Each limit has its
+own **Include** and **Reset**:
 
-Higher entries do not guarantee a higher effective limit. Enforcement above
-the original limit, and interaction with fixed thermal inputs, remain experimental.
+| Limit | Range |
+| --- | --- |
+| GPU | −40 to 105 °C |
+| Hotspot | −40 to 110 °C |
+| Memory | −40 to 105 °C |
+
+Lower values can make thermal limiting reduce clocks sooner. Values outside the
+range are rejected when the field loses focus and by **Apply changes**. Row
+Reset restores that limit's original thresholds; the tile's **Reset all**
+restores all three. Limits stay after mVolt+ closes.
+
+A fixed GPU temp [thermal input](#thermal-inputs), including the LN2 preset,
+changes what the GPU limit sees. Higher entries do not guarantee a higher
+effective limit; behavior above the original limits is unverified.
 
 </details>
 
@@ -488,10 +514,12 @@ hardware. Disabling the clock-range tile does not release an applied lock.
 
 ## Thermal inputs
 
-Channels **1, 3, 4 and 5** provide fixed temperatures for the GPU's
-**voltage/frequency calculations (VFE)**. Channel **2** replaces memory
-temperature. Values are temperatures in °C, not offsets. Their effect depends
-on the GPU's firmware.
+**GPU temp** (channel 1) and **Internal 3–5** (channels 3–5) provide fixed
+temperatures for the GPU's **voltage/frequency calculations (VFE)**. **Memory**
+(channel 2) replaces memory temperature. **Hotspot** (channel 0) sets the
+temperature the hotspot limit sees; the hotspot reading still shows the real
+sensor. Values are temperatures in °C, not offsets. Their effect depends on the
+GPU's firmware.
 
 | Control | What it does |
 | --- | --- |
@@ -511,11 +539,11 @@ to Default when focus moves away; type **0** to request an actual fixed **0 °C*
 Reset followed by an unchanged Apply keeps Default. No verified input range is
 reported, so the tile does not invent slider endpoints.
 
-Channel 1 replaces the reported GPU temperature. This affects mVolt+, its
+GPU temp replaces the reported GPU temperature. This affects mVolt+, its
 software fan curve and other tools that use the same temperature sensor.
 
-**LN2 boost preset** fills channel 1 = +5 °C, channel 3 = 0 °C, channel 4 = −20 °C
-and channel 5 = Default. It leaves channel 2 unchanged. Press **Apply** to send
+**LN2 boost preset** fills GPU temp = +5 °C, Internal 3 = 0 °C, Internal 4 = −20 °C
+and Internal 5 = Default. It leaves Memory and Hotspot unchanged. Press **Apply** to send
 these values. The preset and Reset actions are greyed out with the tile.
 
 Some drivers cannot confirm the requested temperature. These values are marked
@@ -557,6 +585,9 @@ Some GPUs support only an additional cap. On those systems, the existing
 percentage request remains separate and the lower request can limit power.
 Check **Requested limit** and **Enforced limit** in Telemetry → Power.
 
+On laptops whose BIOS allows more power than the driver enforces, the cap also
+raises the laptop's own power request. Desktop cards are unaffected.
+
 A cap is a ceiling, not a target for consumption. An idle GPU or a light workload
 can draw much less than the applied value.
 
@@ -565,7 +596,8 @@ can draw much less than the applied value.
 **Reset** immediately raises the watt cap to the driver's current maximum so
 the percentage limit can take over. It keeps your percentage setting and leaves
 other pending edits alone. Applied may still show a watt value because the cap
-has been raised, not deleted.
+has been raised, not deleted. Other board-power requests left below your
+percentage setting are raised to it, so no stale cap remains.
 In Minimal, right-click the power-cap row and choose **Reset power cap**.
 
 Disabling or hiding the tile, resetting app preferences, or closing mVolt+ does
@@ -671,6 +703,27 @@ These defaults do not produce the same absolute voltage across workloads or GPUs
 A saved **0 mV** offset means no offset. It does not ask mVolt+ to run Reset later.
 
 </details>
+
+### Driver 621.01 and later
+
+Starting with driver 621.01, NVIDIA no longer applies NVVDD/MSVDD voltage-limit
+offsets, OCP increases from a BIOS override or the board-current auxiliary
+limit. The driver accepts these writes and reports success, but the GPU keeps
+its previous limits; the limits appear to be enforced below the driver. mVolt+
+disables these controls on 621.01 and (probably) later drivers:
+
+- **Core voltage limits** and **MSVDD voltage limits**, including OV. Both cards
+  show **Unavailable with this driver**.
+- **XOC voltage range** and **Unlock OCP limits** in Settings.
+- **NVVDD OCP maximum** and **MSVDD OCP maximum** in the BIOS override.
+- The auxiliary limit in **Board input current**; the main limit still works.
+
+Everything else is unaffected. Driver 617.42, the latest before the 621 branch,
+and all earlier drivers support every control; mVolt+ enables them
+automatically there. Profiles with voltage limits still apply on 621.01 and
+later; the voltage limits are skipped and a note is shown. A BIOS override
+saved on an older driver stays active, and **Remove BIOS override** is always
+available.
 
 ## V/F Curve Editor
 
@@ -833,7 +886,8 @@ firmware response and reset/reboot persistence depend on the hardware.
 4. Click **Apply**. Pending edits do not replace the running curve before Apply.
 
 The software curve drives all reported channels together within their shared
-supported duty range.
+supported duty range. A 0% point returns the fans to automatic control where
+the GPU cannot stop them.
 To return to firmware control, set the curve to **Disabled** and press **Apply**,
 or use the dashboard's immediate **Reset to auto**. The fan-curve switch starts
 or stops automatic fan control when you press Apply, even if no curve points
@@ -965,7 +1019,7 @@ the snapshot accepts the cap at the driver's maximum and leaves it there.
 On laptops that have no ordinary board-power request, full snapshots preserve
 that unset state alongside the watt cap and board-current setting.
 
-Board input current, GPU fan policies and Thermal limit follow the same profile
+Board input current, GPU fan policies and Thermal limits follow the same profile
 participation rules where supported. Older app versions may not read profiles
 saved with newer controls; keep the automatic migration backups when downgrading.
 BIOS overrides are managed separately and are not installed by applying
@@ -1319,7 +1373,10 @@ The **CPU** and **Memory** groups add system readings:
 | Reading | Source |
 | --- | --- |
 | CPU load, RAM used / total, RAM speed | Windows |
-| CPU effective clock, CPU temperature, CPU power | [PawnIO](https://pawnio.eu) |
+| CPU clock, CPU effective clock, CPU temperature, CPU power, CPU voltage (VID) | [PawnIO](https://pawnio.eu) |
+
+**CPU clock** is the clock while the cores are running; **CPU effective clock**
+averages all cores, and idle time lowers it.
 | RAM temperature (hottest DDR5 module) | [PawnIO](https://pawnio.eu) |
 
 PawnIO is a free signed driver that you install separately; mVolt+ includes only
@@ -1381,9 +1438,12 @@ these options.
 
 | Option | What enabling it changes | What disabling it can do |
 | --- | --- | --- |
-| **Extended offsets** | Expands per-domain voltage-demand editing beyond the ordinary −25…+50 mV range | Brings out-of-range applied values and pending targets back within the ordinary range |
-| **OCP unlock** | Allows output-current targets above the firmware default within the supported driver range | Restores above-default applied OCP limits to their defaults before closing the range |
-| **XOC range** | Allows voltage limits up to the maximum reported for each rail, or 1.25 V if no valid maximum is reported | Can lower existing rail limits to the standard range |
+| **Extended voltage offsets** | Expands per-domain voltage-demand editing beyond the ordinary −25…+50 mV range | Brings out-of-range applied values and pending targets back within the ordinary range |
+| **Unlock OCP limits** | Allows output-current targets above the firmware default within the supported driver range | Restores above-default applied OCP limits to their defaults before closing the range |
+| **XOC voltage range** | Allows voltage limits up to the maximum reported for each rail, or 1.25 V if no valid maximum is reported | Can lower existing rail limits to the standard range |
+
+**Unlock OCP limits** and **XOC voltage range** are unavailable on driver 621.01
+and later; see [Driver 621.01 and later](#driver-62101-and-later).
 
 **Enabling these options alone does not apply new tuning values.** Disabling
 them can write narrower limits and can fail if the driver cannot apply them;
@@ -1463,7 +1523,9 @@ still depends on the card's voltage regulation; raising one may have no effect
 on the voltage limit the card can reach.
 
 **NVVDD OCP maximum** and **MSVDD OCP maximum** set each rail's available current
-limit in amps, independently of board power and board input current.
+limit in amps, independently of board power and board input current. They are
+unavailable on driver 621.01 and later; see
+[Driver 621.01 and later](#driver-62101-and-later).
 
 **Speedo** overrides the Speedo value the driver reports for this GPU; its effect
 on voltage and clocks depends on the driver and firmware. **Active** matches the
@@ -1528,8 +1590,10 @@ GPU from starting. Prefer a copy from your own card.
 
 The recorded starting state may already include earlier modifications; it is
 not necessarily factory stock. Dashboard **Reset all** does not remove saved
-BIOS overrides. Explicit override removal requires a full Windows restart;
-use **Restart Windows** or **Later** when those are the offered actions.
+BIOS overrides. **Remove BIOS override** is offered whenever an override is
+stored, including when the recovery storage is unreadable. After removal,
+**Restart GPU** completes it when the card's own BIOS loads again; otherwise use
+**Restart Windows** or **Later** when those are the offered actions.
 
 Keep `%PROGRAMDATA%\mVolt+\NativeLimits`. Deleting it does not remove an active
 override and can lose the saved starting state. If it is missing, reopen mVolt+
@@ -1573,6 +1637,8 @@ particular voltage rail or editor.
 The app checks support separately for each control and sensor, including
 supported interfaces in older NVIDIA drivers. Available features depend on
 your GPU and driver; one unavailable feature does not disable the others.
+On driver 621.01 and later, voltage limits, OCP increases and the board-current
+auxiliary limit are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
 
 Some drivers provide fewer telemetry details or cannot report exact thermal
 input values. Missing readings stay unavailable. Where supported, thermal
@@ -1616,7 +1682,7 @@ includes these readings:
 | `power_limits.enforced_mw` | Limit currently enforced by the driver, in milliwatts |
 | `power_limits.default_mw` | Driver-reported default board power limit |
 | `power_client.fe_mw` | Ordinary board-power request in milliwatts, or `null` when no request is set |
-| `thermal_inputs` | Channels 1/2/3/4/5, availability, substitution state, Celsius/raw input and confirmation state |
+| `thermal_inputs` | Channels 1/2/3/4/5, then 0 (hotspot), availability, substitution state, Celsius/raw input and confirmation state |
 
 Unavailable readings are `null`, not zero. A default thermal input has
 `overridden:false` and `input_c:null`; its retained `raw` number is inactive
@@ -1655,7 +1721,7 @@ They do not create a dashboard draft. Unspecified controls are left untouched.
 | `--nvvdd-ocp` / `--msvdd-ocp` | Rail output-current limit in amps |
 | `--boost-lock` | `on` or `off`; immediate action, not saved in profiles |
 | `--clock-range` | `MIN,MAX` in MHz, or `default` to release the lock |
-| `--thermal-input-1` through `--thermal-input-5` | Signed fixed temperature in Celsius, or `default` to disable that channel's substitution |
+| `--thermal-input-0` through `--thermal-input-5` | Signed fixed temperature in Celsius, or `default` to disable that channel's substitution |
 | `--xoc` | Selects the extended voltage-ceiling mode for the request |
 | `--profile` | Saved profile name or ID |
 | `--gpu` | Adapter index; default 0 for CLI selection |
@@ -1668,7 +1734,8 @@ an explicit zero clears its offset. REL and ALT are separate positional values:
 the GUI's linked editing preference does not change CLI arguments.
 
 Thermal inputs are fixed temperatures, not offsets. Channels 1/3/4/5 feed VFE
-calculations; channel 2 replaces memory temperature.
+calculations; channel 2 replaces memory temperature; channel 0 sets the
+temperature the hotspot limit sees.
 Use `default` to restore the normal source; entering `0` explicitly substitutes
 0 °C. Multiple thermal options are applied together, with unmentioned
 channels left untouched. Channel 1 replaces the GPU temperature input; a running
@@ -1821,6 +1888,15 @@ See [How the dashboard works](#how-the-dashboard-works).
 Check the readback maximum under **Applied**, or the detailed hover help. Another limit may still constrain it; even
 if MAX rises, the workload may not need more voltage.
 See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage).
+
+</details>
+
+<details>
+<summary><strong>Voltage limits show Unavailable with this driver</strong></summary>
+
+Driver 621.01 and later no longer apply voltage-limit offsets, OCP increases or
+the board-current auxiliary limit. Use driver 617.42 or earlier to change them.
+See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 
