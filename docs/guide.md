@@ -14,6 +14,7 @@ for details. Screenshots are from the v0.50.x series.
 | [Dashboard control reference](#dashboard-control-reference) | Every tile, grouped as it appears in the app |
 | [Power cap in watts](#power-cap-in-watts) | Watt targets, percentage limits and Reset |
 | [BIOS override](#bios-override) | Clock ranges, voltage/current limits, fan settings and recovery |
+| [Raising voltage and OCP on 621.01+](#raising-voltage-and-ocp-on-driver-62101-and-later) | Higher voltage limits and OCP when the dashboard limits are unavailable |
 | [BIOS copy](#bios-copy) | Save a copy with GPU-Z or NVFlash |
 | [Thermal inputs](#thermal-inputs) | Fixed inputs to VFE, Default, Reset and profiles |
 | [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT/OP, OV, linked editing and MAX |
@@ -115,7 +116,7 @@ logon or for command-line/read-only launches.
 | Fan control | ✓ | ✓ | ✓ |
 | Power limit (%) | ✓ | ✓ | ✓ |
 | Power cap (watts) | ✓ | ✓ | ✓ |
-| Board input current | ✓ | ✓ | ✓ |
+| Board input current limit | ✓ | ✓ | ✓ |
 | Core voltage limits | — | ✓ | ✓ |
 | MSVDD voltage limits | — | ✓ | ✓ |
 | Core voltage offset | — | ✓ | ✓ |
@@ -133,7 +134,7 @@ logon or for command-line/read-only launches.
 Visibility does not guarantee hardware support; an unsupported control remains
 unavailable. Hiding a tile does not change its value or whether it is included
 in Apply and profiles. Voltage boost, Fan control and both power tiles are
-included in every preset, along with Board input current.
+included in every preset, along with Board input current limit.
 
 ## Dashboard control reference
 
@@ -165,7 +166,8 @@ using these controls. Reset restores the rail defaults within the selected
 voltage limits; it does not lock the rail to a fixed voltage.
 
 On driver 621.01 and later the card shows **Unavailable with this driver**.
-See [Driver 621.01 and later](#driver-62101-and-later).
+See [Driver 621.01 and later](#driver-62101-and-later). To raise core voltage
+limits there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 </details>
 
@@ -223,6 +225,8 @@ current or the board's power budget.
 The ordinary range is capped at the firmware default where available. **Unlock
 OCP limits** in Settings exposes the extended supported range; it is unavailable on
 driver 621.01 and later. Reset returns this channel to its firmware default.
+To raise that default, use the BIOS override
+[NVVDD current limit](#current-limits).
 
 The driver must report a consistent minimum, default and maximum for this
 channel. A fixed range is valid, but missing or contradictory bounds leave
@@ -251,7 +255,8 @@ set VRAM voltage. See [Voltage limits and measured voltage](#voltage-limits-and-
 including the different MSVDD Reset default.
 
 On driver 621.01 and later the card shows **Unavailable with this driver**.
-See [Driver 621.01 and later](#driver-62101-and-later).
+See [Driver 621.01 and later](#driver-62101-and-later). To raise MSVDD voltage
+limits there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 </details>
 
@@ -336,7 +341,8 @@ the regulator's physical protection threshold.
 
 **Unlock OCP limits** expands the editable range beyond the firmware default
 where supported; it is unavailable on driver 621.01 and later. Reset restores
-this rail's firmware current limit.
+this rail's firmware current limit. To raise that limit, use the BIOS override
+[MSVDD current limit](#current-limits).
 
 </details>
 
@@ -407,7 +413,7 @@ See [Power cap in watts](#power-cap-in-watts) for examples, limits and persisten
 </details>
 
 <details>
-<summary><strong>Board input current</strong> — board-current limit, in amperes</summary>
+<summary><strong>Board input current limit</strong> — board-current limit, in amperes</summary>
 
 Sets the board's input-current request independently of its power budget and
 the NVVDD/MSVDD output OCP limits. Enable the tile, enter amps, then Apply.
@@ -432,6 +438,12 @@ voltage or increase physical voltage by that percentage.
 Workload, reliability, power and thermal limits still apply. Voltage Boost can
 change the baseline used to evaluate rail limits, even when the rail offsets
 themselves have not changed. Reset returns this control to its default.
+
+On desktop RTX 50 cards, 0 % keeps each rail at its REL limit and 100 % adds
+the REL to ALT/OP gap to every rail, usually 20 mV. If the rails' gaps differ,
+the smallest one counts. A REL raised in the
+BIOS override gets the same headroom on top; see
+[Raising voltage and OCP on driver 621.01 and later](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 Voltage boost is checked separately from voltage-limit editing and may also
 be available on older GeForce cards. Availability depends on the GPU and driver.
@@ -568,7 +580,7 @@ reported maximum.
 
 | Tile line | What it means |
 | --- | --- |
-| **Target** | The watt value being edited |
+| **Target** | The watt value being edited; without a cap it starts at the power limit in force on supported GPUs |
 | **Applied** | The cap read back from the driver, or **No cap** when no request exists |
 | **Live** | Measured board power, using the same reading as the percentage tile |
 | **Allowed** | 1 W through the driver's current maximum |
@@ -586,7 +598,8 @@ percentage request remains separate and the lower request can limit power.
 Check **Requested limit** and **Enforced limit** in Telemetry → Power.
 
 On laptops whose BIOS allows more power than the driver enforces, the cap also
-raises the laptop's own power request. Desktop cards are unaffected.
+raises the laptop's own power request and its CPU+GPU budget by the same amount.
+Reset returns both. Desktop cards are unaffected.
 
 A cap is a ceiling, not a target for consumption. An idle GPU or a light workload
 can draw much less than the applied value.
@@ -607,6 +620,8 @@ percentage editing; choosing Reset explicitly replaces that cap too.
 If an interrupted operation leaves recovery pending, use Reset to return to
 percentage control. Further cap changes remain blocked until recovery succeeds.
 Keep the recovery data if Reset fails; deleting it does not restore the GPU.
+
+On a laptop, choose Reset before going back to an older mVolt+ version.
 
 See [Power controls in profiles](#power-controls-in-profiles) for saved settings
 and switching between percentage and watt-cap profiles.
@@ -707,16 +722,16 @@ A saved **0 mV** offset means no offset. It does not ask mVolt+ to run Reset lat
 ### Driver 621.01 and later
 
 Starting with driver 621.01, NVIDIA no longer applies NVVDD/MSVDD voltage-limit
-offsets, OCP increases from a BIOS override or the board-current auxiliary
-limit. The driver accepts these writes and reports success, but the GPU keeps
-its previous limits; the limits appear to be enforced below the driver. mVolt+
-disables these controls on 621.01 and (probably) later drivers:
+offsets, a raised OCP maximum or the board-current auxiliary limit. The driver
+accepts these writes and reports success, but the GPU keeps its previous
+limits; the limits appear to be enforced below the driver. mVolt+ disables
+these controls on 621.01 and (probably) later drivers:
 
 - **Core voltage limits** and **MSVDD voltage limits**, including OV. Both cards
   show **Unavailable with this driver**.
 - **XOC voltage range** and **Unlock OCP limits** in Settings.
-- **NVVDD OCP maximum** and **MSVDD OCP maximum** in the BIOS override.
-- The auxiliary limit in **Board input current**; the main limit still works.
+- The auxiliary limit in **Board input current limit**; the main limit still
+  works.
 
 Everything else is unaffected. Driver 617.42, the latest before the 621 branch,
 and all earlier drivers support every control; mVolt+ enables them
@@ -724,6 +739,9 @@ automatically there. Profiles with voltage limits still apply on 621.01 and
 later; the voltage limits are skipped and a note is shown. A BIOS override
 saved on an older driver stays active, and **Remove BIOS override** is always
 available.
+
+To raise voltage limits or OCP on these drivers, use the BIOS override; see
+[Raising voltage and OCP on driver 621.01 and later](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 ## V/F Curve Editor
 
@@ -894,7 +912,7 @@ or stops automatic fan control when you press Apply, even if no curve points
 changed.
 
 **Reset curve** restores and immediately applies the default points and hysteresis,
-while keeping the curve's current applied enabled state. It differs from Reset
+while keeping the curve's **Enabled** switch as it is. It differs from Reset
 to auto.
 
 </details>
@@ -1019,9 +1037,10 @@ the snapshot accepts the cap at the driver's maximum and leaves it there.
 On laptops that have no ordinary board-power request, full snapshots preserve
 that unset state alongside the watt cap and board-current setting.
 
-Board input current, GPU fan policies and Thermal limits follow the same profile
-participation rules where supported. Older app versions may not read profiles
-saved with newer controls; keep the automatic migration backups when downgrading.
+Board input current limit, GPU fan policies and Thermal limits follow the same
+profile participation rules where supported. Older app versions may not read
+profiles saved with newer controls; keep the automatic migration backups when
+downgrading.
 BIOS overrides are managed separately and are not installed by applying
 a tuning profile.
 
@@ -1310,7 +1329,7 @@ Thermal inputs share one row in channel order **1 / 2 / 3 / 4 / 5**, with values
 separated by `/`; **Def.** means the corresponding fixed input is off.
 Each rail's voltage offsets are grouped together, and Core, XBAR, SYS and Video
 curves have separate summaries showing adjusted points out of the total.
-**Board input current** shows the applied current request in amperes.
+**Board input current limit** shows the applied current request in amperes.
 
 **Copy summary** copies current applied settings. **Always on top** keeps
 the window above other applications. Unapplied edits are not shown as applied.
@@ -1443,7 +1462,8 @@ these options.
 | **XOC voltage range** | Allows voltage limits up to the maximum reported for each rail, or 1.25 V if no valid maximum is reported | Can lower existing rail limits to the standard range |
 
 **Unlock OCP limits** and **XOC voltage range** are unavailable on driver 621.01
-and later; see [Driver 621.01 and later](#driver-62101-and-later).
+and later; see [Driver 621.01 and later](#driver-62101-and-later). To raise
+voltage limits or OCP there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 **Enabling these options alone does not apply new tuning values.** Disabling
 them can write narrower limits and can fail if the driver cannot apply them;
@@ -1472,14 +1492,16 @@ it off restores the uncorrected display.
 
 ## BIOS override
 
-Open **Settings → Advanced tuning → BIOS override**. The window groups controls
-into three sections:
+Open **Settings → Advanced tuning → BIOS override**. The window has four tabs:
 
-| Section | Controls |
+| Tab | Controls |
 | --- | --- |
-| **Clock offsets** | Minimum and maximum offsets for Core, Memory, XBAR, SYS and Video |
-| **Power & voltage** | Power limit, board input current, NVVDD/MSVDD voltage ceilings, NVVDD/MSVDD OCP maximums and Speedo |
+| **Clocks** | Minimum and maximum offsets for Core, Memory, XBAR, SYS and Video |
+| **Power & current** | Power limit, board input current limit, NVVDD and MSVDD current limits |
+| **Voltage** | NVVDD and MSVDD REL, ALT/OP, OV and VMIN voltage limits, and Speedo |
 | **Fans** | Logical fan-channel count and PWM frequency |
+
+A dot on a tab marks entries there that are not saved yet.
 
 ![BIOS override](../assets/mvolt-bios-override.png)
 
@@ -1497,49 +1519,131 @@ to get a BIOS copy and this persistence.
 1. Select the intended GPU, open BIOS override and choose a method. **Direct**
    needs no file. For **BIOS file**, use **Load BIOS file…** if a copy is needed;
    loading only previews it. See [BIOS copy](#bios-copy).
-2. Edit the **New minimum**, **New maximum** or fan settings you want to change,
-   then choose **Save limits**. Unedited rows keep their settings.
+2. Enter a **New minimum**, **New maximum**, **New value** or fan setting on any
+   tab, then choose **Save limits**. Unedited rows keep their settings.
 3. Choose the offered **Restart GPU** or **Restart Windows** action. Save work first; the display
    may briefly go blank during a GPU restart. **Later** leaves the changes pending.
-4. Wait for confirmation that the limits are active.
+4. Wait for **The new limits are active and verified.** The status then reads
+   **Active**. After **Restart Windows**, open mVolt+ again to see it.
 5. Return to the dashboard, enter your tuning targets and choose **Apply changes**.
 
-Saving limits changes the available tuning range. Set the actual clock, voltage,
-power or current target on the dashboard afterwards.
+Clock, power and board input current limits change the available tuning range;
+set the actual target on the dashboard afterwards. Voltage limits, current
+limits, Speedo and fan settings work by themselves after the restart.
 
 | Column | Meaning |
 | --- | --- |
-| **BIOS default** | Original clock range or firmware operating default for power/current controls |
-| **Active / Active maximum** | The range, ceiling or fan setting currently in effect |
+| **BIOS default** / **Default** | The original BIOS value: clock range, fan setting, power or current default, or voltage limit |
+| **Active ranges** / **Active value** / **Active** | The range, limit or fan setting currently in effect |
 | **Theoretical max.** | Guidance only; not a guaranteed working or safe limit |
-| **New minimum / New maximum / New** | The value you want to save |
+| **New minimum** / **New maximum** / **New value** / **New** | The value you want to save |
 
 Each control is checked independently. An unavailable row leaves the other
-supported controls usable. Voltage ceilings have no separate operating default,
-so their **BIOS default** column shows a dash. The window scrolls on smaller displays.
+supported controls usable; hover over **Unavailable** for the reason. The window
+scrolls on smaller displays.
 
-The NVVDD and MSVDD rows set the BIOS-declared voltage ceilings. Their effect
-still depends on the card's voltage regulation; raising one may have no effect
-on the voltage limit the card can reach.
+**Speedo** on the **Voltage** tab overrides the Speedo value the driver reports
+for this GPU; its effect on voltage and clocks depends on the driver and
+firmware. **Active value** matches the Telemetry reading. A Speedo-only change
+can be saved with either method, without a BIOS copy.
 
-**NVVDD OCP maximum** and **MSVDD OCP maximum** set each rail's available current
-limit in amps, independently of board power and board input current. They are
-unavailable on driver 621.01 and later; see
-[Driver 621.01 and later](#driver-62101-and-later).
-
-**Speedo** overrides the Speedo value the driver reports for this GPU; its effect
-on voltage and clocks depends on the driver and firmware. **Active** matches the
-Telemetry reading. A Speedo-only change can be saved with either method, without
-a BIOS copy.
-
-**Fan layout** selects 0–4 logical channels. **PWM frequency** selects 25 or
-27 kHz and is separate from fan duty and RPM targets. **Mixed** means the active
-channels use different frequencies. Fan settings use the same Save and restart
-steps as the other overrides.
+**Fan layout** on the **Fans** tab selects 0–4 logical channels. **PWM
+frequency** selects 25 or 27 kHz and is separate from fan duty and RPM targets.
+**Mixed** means the active channels use different frequencies. Fan settings use
+the same Save and restart steps as the other overrides.
 
 To switch the method of saved limits, choose the other method and follow the
 restart steps. Once the original limits are confirmed, previous entries return
 as drafts where supported. Review them and choose **Save limits** to use the new method.
+
+### Voltage limits
+
+The **Voltage** tab sets each rail's voltage limits in mV:
+
+| Row | What it sets |
+| --- | --- |
+| **REL** | Reliability limit, the normal top voltage; Voltage Boost can add a little on top |
+| **ALT/OP** | Operating limit, the top of Voltage Boost |
+| **OV** | Overvoltage limit, the highest voltage the card allows |
+| **VMIN** | Minimum voltage limit, the lowest voltage the card uses |
+
+On most desktop RTX 50 BIOSes, **REL** sets the limit your card calculates.
+On other BIOSes it only caps that limit, so raising it above the calculated
+value has no effect. Hover over the row name to see which applies.
+
+**REL** and **ALT/OP** move together by the gap the BIOS keeps between them,
+20 mV on desktop RTX 50 cards. Typing one moves the other. To set the voltage
+you want at full Voltage Boost, type it as **ALT/OP**; REL follows, lower by
+the gap.
+
+- **Default** is the BIOS value. For a REL the card calculates, it is the value
+  your card calculated before any edits, for example 1070 mV on an RTX 5090;
+  **New value** starts there. **Up to** marks the BIOS cap when that value is
+  unknown. **Calculated** marks a limit the BIOS calculates, with no single
+  value to edit.
+- **Active value** is the limit the driver reports now, without runtime offsets;
+  for **REL**, also without Voltage Boost.
+  MSVDD's actual limit is lower by its **Reported Vrel offset** (Telemetry →
+  GPU info), −50 mV on the tested RTX 5090.
+- **Theoretical max.** is the rail's OV limit for REL and ALT/OP, and the
+  voltage regulator's maximum for OV.
+
+These are limits, not measured voltages or safe operating values. On some
+BIOSes, for example laptop and XOC BIOSes, some rows are unavailable or
+calculated.
+
+### Current limits
+
+**NVVDD current limit** and **MSVDD current limit** on the **Power & current**
+tab set each rail's default output-current limit (OCP) in amps, independently of
+board power and the board input current limit. They are offered on every
+driver, including 621.01 and later. After the restart, the new value is the
+rail's default current limit.
+
+### Raising voltage and OCP on driver 621.01 and later
+
+On driver 621.01 and later, the dashboard voltage limits, **XOC voltage range**
+and **Unlock OCP limits** are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
+The BIOS override still raises voltage limits and OCP there. Neither method
+flashes the card.
+
+![BIOS override Voltage tab](../assets/mvolt-bios-voltage.png)
+
+To raise the voltage limit:
+
+1. Open **Settings → Advanced tuning → BIOS override** and choose the
+   **Voltage** tab. **Direct** needs no BIOS file.
+2. Type a **New value** for **NVVDD REL**, or the **NVVDD ALT/OP** you want at
+   full Voltage Boost. The other one moves with it. MSVDD works the same way.
+3. Choose **Save limits**, then **Restart GPU** or **Restart Windows**.
+4. Wait for **The new limits are active and verified.** After **Restart
+   Windows**, open mVolt+ again to see it.
+5. On the dashboard, set **Voltage boost** and tune clocks as usual.
+
+On desktop RTX 50 cards, Voltage Boost 0 % stays at REL and 100 % adds the REL
+to ALT/OP gap to every rail, usually 20 mV; percentages in between scale it in
+5 mV steps. If the rails' gaps differ, the smallest one counts. Read back on
+the tested RTX 5090:
+
+| NVVDD entry | Boost 0 % | Boost 100 % |
+| --- | --- | --- |
+| None (stock REL 1070 mV) | 1070 mV | 1090 mV |
+| **NVVDD REL** 1090 mV | 1090 mV | 1110 mV |
+| **NVVDD ALT/OP** 1100 mV (REL moves to 1080 mV) | 1080 mV | 1100 mV |
+
+These are the limits the driver reports without load, not measured voltages.
+
+To raise OCP, type a higher **NVVDD current limit** or **MSVDD current limit**
+on the **Power & current** tab, then save and restart the same way. On the
+tested RTX 5090, NVVDD 520 A (stock 480 A) read back active; behavior under load
+is not yet confirmed.
+
+To undo, choose **Use original limits / Remove BIOS override**, restart as
+offered and wait for **The initial state has been restored and verified.**
+
+This was tested on an RTX 5090 with driver 621.01. Other cards, laptops and
+older drivers are not yet tested. Raise limits in small steps and check
+stability.
 
 ### BIOS copy
 
@@ -1575,7 +1679,7 @@ originally came from your card.
 For an intentionally different image, enable **Allow different BIOS
 (experimental)**. Then choose **Save BIOS**, restart, and wait for verification.
 Only afterwards can mVolt+ show and edit that BIOS's supported limits. Fields
-marked **After restart** are expected during the preview.
+marked **Restart first** are expected during the preview.
 
 This option relaxes the original-BIOS match; it does not make another board's
 BIOS compatible or unlock every control. An incompatible BIOS can prevent the
@@ -1591,9 +1695,14 @@ GPU from starting. Prefer a copy from your own card.
 The recorded starting state may already include earlier modifications; it is
 not necessarily factory stock. Dashboard **Reset all** does not remove saved
 BIOS overrides. **Remove BIOS override** is offered whenever an override is
-stored, including when the recovery storage is unreadable. After removal,
-**Restart GPU** completes it when the card's own BIOS loads again; otherwise use
-**Restart Windows** or **Later** when those are the offered actions.
+stored, including when the recovery storage is unreadable, the recovery data is
+damaged or a change cannot be verified. Damaged recovery data is kept as a
+separate copy. After removal, **Restart GPU** completes it when the card's own
+BIOS loads again; otherwise use **Restart Windows** or **Later** when those are
+the offered actions.
+
+Before going back to an older mVolt+ version, remove the BIOS override and
+restart. An older version may not read limits saved by this one.
 
 Keep `%PROGRAMDATA%\mVolt+\NativeLimits`. Deleting it does not remove an active
 override and can lose the saved starting state. If it is missing, reopen mVolt+
@@ -1625,6 +1734,18 @@ Windows when requested, then reopen mVolt+ to verify it.
 It does not necessarily restore factory settings, and cannot recreate deleted
 recovery data. If the record is unclear or recovery fails, report the issue.
 
+If startup recovery is not offered or does not help, the same administrator
+PowerShell window can remove every stored BIOS override without the NVIDIA
+driver:
+
+```powershell
+.\mVolt+.exe --remove-bios-override | Out-Host
+```
+
+With more than one NVIDIA GPU, add `--gpu-id` with the affected GPU's
+`adapter_id`, as `--list-gpus` showed it while the GPU worked. Restart Windows
+afterwards.
+
 </details>
 
 ## Compatibility and multiple GPUs
@@ -1637,8 +1758,9 @@ particular voltage rail or editor.
 The app checks support separately for each control and sensor, including
 supported interfaces in older NVIDIA drivers. Available features depend on
 your GPU and driver; one unavailable feature does not disable the others.
-On driver 621.01 and later, voltage limits, OCP increases and the board-current
-auxiliary limit are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
+On driver 621.01 and later, the dashboard voltage limits, OCP unlock and the
+board-current auxiliary limit are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
+The BIOS override still raises voltage limits and OCP there.
 
 Some drivers provide fewer telemetry details or cannot report exact thermal
 input values. Missing readings stay unavailable. Where supported, thermal
@@ -1894,9 +2016,10 @@ See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage).
 <details>
 <summary><strong>Voltage limits show Unavailable with this driver</strong></summary>
 
-Driver 621.01 and later no longer apply voltage-limit offsets, OCP increases or
-the board-current auxiliary limit. Use driver 617.42 or earlier to change them.
-See [Driver 621.01 and later](#driver-62101-and-later).
+Driver 621.01 and later no longer apply voltage-limit offsets, a raised OCP
+maximum or the board-current auxiliary limit. To raise voltage limits or OCP,
+use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later), or
+use driver 617.42 or earlier. See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 

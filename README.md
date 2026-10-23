@@ -22,10 +22,10 @@ the currently downloadable version.
 
 ## v0.50.x highlights
 
-- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power/current limits, NVVDD/MSVDD voltage and OCP ceilings and Speedo, with BIOS defaults beside active values and Restart GPU recovery. [Guide](docs/guide.md#bios-override).
+- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power and current limits, NVVDD/MSVDD REL, ALT/OP, OV and VMIN voltage limits and Speedo, on four tabs with BIOS defaults beside active values and Restart GPU recovery. It also raises voltage and OCP on driver 621.01 and later. [Guide](docs/guide.md#bios-override) · [Voltage on 621.01+](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
 - **Power and current:** percentage or watt-based power control, separate board-input current control, and profile and Overview support.
 - **Fan control:** a unified mVolt / GPU editor with temperature, PWM and RPM fields, saved GPU policies and startup Apply, then exit. BIOS override adds fan layout and PWM frequency controls.
-- **Thermal limit:** a separate temperature-limit control in °C, with profile support and Reset.
+- **Thermal limits:** GPU, hotspot and memory temperature limits in °C, with profile support and Reset.
 - **Curves:** Core and fabric V/F editing, Flatten above with Drop tail / Match tail and a warming preview, software fan curves, precise point selection and dragging, and improved curve preservation during Apply and Reset.
 - **Dashboard:** Standard and Minimal / Compact layouts, expandable fan and thermal rows, independent overvoltage switches and visibility, corrected sliders, memory, XBAR and SYS clock header readings, per-card Apply beside Reset and Enter-to-apply.
 - **Profiles:** normal profiles and full snapshots, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing, editable names and shortcuts, and the applied profile name in `--status` JSON.
@@ -64,7 +64,7 @@ the currently downloadable version.
   temperatures, boost-limit reasons, memory timings, memory pressure, PCIe traffic
   and GPU information.
 - **Thermal inputs:** fixed temperatures for the GPU's voltage/frequency
-  calculations, plus channel 2 for memory temperature. Default restores the
+  calculations, plus channel 2 for memory temperature and a hotspot input. Default restores the
   GPU-provided input.
 - **Dashboard:** Standard and Minimal / Compact layouts, collapsible sections,
   Quick tuning pins, tile visibility, themes, interface sizing and hover help.
@@ -167,6 +167,8 @@ correct supported power and current displays. It does not change tuning values.
 Compatibility is checked separately for each control and sensor. Support
 includes older NVIDIA driver interfaces; available features vary by GPU and
 driver. Voltage boost may be available even when voltage-limit editing is not.
+On driver 621.01 and later, the dashboard voltage limits are unavailable; raise
+voltage and OCP with the [BIOS override](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 Readings the driver does not provide remain unavailable. Thermal temperatures
 that cannot be verified are labelled unconfirmed.
