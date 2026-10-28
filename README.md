@@ -15,20 +15,21 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 **[Report an issue](https://github.com/b00nz/mVolt/issues)**
 
 Run the executable; no installer is needed. Tuning requires administrator
-privileges.
+privileges. **Check for updates** in **Settings → General** finds a newer
+release and installs it in place.
 
 This README and the guide cover **mVolt+ v0.50.x**. Check the release page for
 the currently downloadable version.
 
 ## v0.50.x highlights
 
-- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power and current limits, NVVDD/MSVDD REL, ALT/OP, OV and VMIN voltage limits and Speedo, on four tabs with BIOS defaults beside active values and Restart GPU recovery. It also raises voltage and OCP on driver 621.01 and later. [Guide](docs/guide.md#bios-override) · [Voltage on 621.01+](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
+- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power and current limits, NVVDD/MSVDD REL, ALT/OP, OV and VMIN voltage limits and Speedo, on four tabs with BIOS defaults beside active values and Restart GPU recovery. On RTX 50 with driver 621.01 and later, it raises voltage and OCP, and experimental **Voltage offsets** make the dashboard voltage limits work again. **Black-screen fix** switches the driver's −50 mV MSVDD REL change on or off. [Guide](docs/guide.md#bios-override) · [Voltage on 621.01+](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
 - **Power and current:** percentage or watt-based power control, separate board-input current control, and profile and Overview support.
-- **Fan control:** a unified mVolt / GPU editor with temperature, PWM and RPM fields, saved GPU policies and startup Apply, then exit. BIOS override adds fan layout and PWM frequency controls.
+- **Fan control:** a unified mVolt / GPU editor with temperature, PWM and RPM fields, per-fan software curves, saved GPU policies and startup Apply, then exit. BIOS override adds fan layout and PWM frequency controls.
 - **Thermal limits:** GPU, hotspot and memory temperature limits in °C, with profile support and Reset.
 - **Curves:** Core and fabric V/F editing, Flatten above with Drop tail / Match tail and a warming preview, software fan curves, precise point selection and dragging, and improved curve preservation during Apply and Reset.
 - **Dashboard:** Standard and Minimal / Compact layouts, expandable fan and thermal rows, independent overvoltage switches and visibility, corrected sliders, memory, XBAR and SYS clock header readings, per-card Apply beside Reset and Enter-to-apply.
-- **Profiles:** normal profiles and full snapshots, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing, editable names and shortcuts, and the applied profile name in `--status` JSON.
+- **Profiles:** normal profiles and full snapshots, saved clock locks, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing, editable names and shortcuts, and the applied profile name in `--status` JSON.
 - **Telemetry:** expanded GPU and memory temperatures, firmware-reported Vrel, ASIC information with Speedo and a copyable ECID, and older memory V/F model support.
 - **RTSS overlay:** GPU readings, profile and Boost Lock state, FPS, frame time, average FPS and lows, plus CPU and RAM readings through the optional PawnIO driver, with grouped settings, reorderable lines, custom colors and a preview.
 - **Shortcuts:** global profile shortcuts, Toggle Boost Lock and Toggle RTSS overlay, including tray operation.
@@ -55,8 +56,8 @@ the currently downloadable version.
   Each curve has its own Enabled switch and optional reference line. Core also
   offers a live operating-point marker and immediate voltage-point or maximum-clock locks.
 - **Power and cooling:** percentage or watt-based power control, board input
-  current, Voltage Boost, NVVDD/MSVDD OCP, thermal limit, fixed fan duty and
-  software or supported GPU fan-policy editing.
+  current, Voltage Boost, NVVDD/MSVDD OCP, thermal limit, fixed fan duty,
+  shared or per-fan software curves and supported GPU fan-policy editing.
 - **BIOS override:** use Direct or a BIOS file to change clock ranges, voltage,
   power and current limits, fan layout and PWM frequency.
   Saved limits persist in this Windows installation until reverted; neither method flashes the card.
@@ -107,8 +108,9 @@ with it. Applying a percentage profile releases a cap owned by mVolt+ first.
 Full snapshots retain the exact applied power requests.
 See [power controls in profiles](docs/guide.md#power-controls-in-profiles).
 
-Boost lock and the V/F editor's point/clock locks are immediate actions, outside
-both profile modes. Core, XBAR, SYS and Video curves are saved separately.
+Boost lock and the V/F editor's point/clock locks act immediately. Profiles
+saved while a lock is held restore it; a normal profile without a lock leaves
+the current lock alone. Core, XBAR, SYS and Video curves are saved separately.
 Normal profiles save enabled curves that have already been applied. Disabled
 curves are left out. Full snapshots save supported curves even when disabled.
 A profile that does not contain a curve leaves it unchanged.
@@ -167,8 +169,9 @@ correct supported power and current displays. It does not change tuning values.
 Compatibility is checked separately for each control and sensor. Support
 includes older NVIDIA driver interfaces; available features vary by GPU and
 driver. Voltage boost may be available even when voltage-limit editing is not.
-On driver 621.01 and later, the dashboard voltage limits are unavailable; raise
-voltage and OCP with the [BIOS override](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
+On RTX 50 with driver 621.01 and later, the dashboard voltage limits need the
+experimental **Voltage offsets** of the [BIOS override](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later),
+which also raises voltage and OCP there.
 
 Readings the driver does not provide remain unavailable. Thermal temperatures
 that cannot be verified are labelled unconfirmed.

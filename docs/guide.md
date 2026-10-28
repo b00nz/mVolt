@@ -14,7 +14,7 @@ for details. Screenshots are from the v0.50.x series.
 | [Dashboard control reference](#dashboard-control-reference) | Every tile, grouped as it appears in the app |
 | [Power cap in watts](#power-cap-in-watts) | Watt targets, percentage limits and Reset |
 | [BIOS override](#bios-override) | Clock ranges, voltage/current limits, fan settings and recovery |
-| [Raising voltage and OCP on 621.01+](#raising-voltage-and-ocp-on-driver-62101-and-later) | Higher voltage limits and OCP when the dashboard limits are unavailable |
+| [Raising voltage and OCP on 621.01+](#raising-voltage-and-ocp-on-driver-62101-and-later) | Voltage offsets, higher voltage limits and OCP on RTX 50 |
 | [BIOS copy](#bios-copy) | Save a copy with GPU-Z or NVFlash |
 | [Thermal inputs](#thermal-inputs) | Fixed inputs to VFE, Default, Reset and profiles |
 | [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage) | VMIN, REL, ALT/OP, OV, linked editing and MAX |
@@ -24,8 +24,8 @@ for details. Screenshots are from the v0.50.x series.
 | [Startup and tray](#startup-and-tray) | Logon readiness, recovery and closing behavior |
 | [Telemetry](#telemetry) | Sensors, graphs, boost reasons, memory timings and PCIe |
 | [Overview](#overview) | A compact view of current settings |
-| [Settings and layout](#settings-and-layout) | Polling, RTSS, themes, sizing and tile visibility |
-| [Advanced tuning](#advanced-tuning) | Extended demands, OCP unlock, XOC and shunt correction |
+| [Settings and layout](#settings-and-layout) | Polling, RTSS, updates, themes, sizing and tile visibility |
+| [Advanced tuning](#advanced-tuning) | OCP unlock, XOC and shunt correction |
 | [Compatibility and multiple GPUs](#compatibility-and-multiple-gpus) | Selecting hardware and understanding unavailable controls |
 | [Command line and automation](#command-line-and-automation) | Read-only commands and immediate tuning requests |
 | [Files and logging](#files-and-logging) | Profiles, backups and storage footprint |
@@ -165,8 +165,9 @@ in Settings. In the offset view, REL and ALT/OP can be linked or edited separate
 using these controls. Reset restores the rail defaults within the selected
 voltage limits; it does not lock the rail to a fixed voltage.
 
-On driver 621.01 and later the card shows **Unavailable with this driver**.
-See [Driver 621.01 and later](#driver-62101-and-later). To raise core voltage
+On RTX 50 with driver 621.01 and later, the card shows **Unavailable with this
+driver** until BIOS override **Voltage offsets** are on and verified. See
+[Driver 621.01 and later](#driver-62101-and-later). To raise core voltage
 limits there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 </details>
@@ -224,7 +225,7 @@ current or the board's power budget.
 
 The ordinary range is capped at the firmware default where available. **Unlock
 OCP limits** in Settings exposes the extended supported range; it is unavailable on
-driver 621.01 and later. Reset returns this channel to its firmware default.
+RTX 50 with driver 621.01 and later. Reset returns this channel to its firmware default.
 To raise that default, use the BIOS override
 [NVVDD current limit](#current-limits).
 
@@ -254,8 +255,9 @@ propagation and other limits can influence the result. This card does not direct
 set VRAM voltage. See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage),
 including the different MSVDD Reset default.
 
-On driver 621.01 and later the card shows **Unavailable with this driver**.
-See [Driver 621.01 and later](#driver-62101-and-later). To raise MSVDD voltage
+On RTX 50 with driver 621.01 and later, the card shows **Unavailable with this
+driver** until BIOS override **Voltage offsets** are on and verified. See
+[Driver 621.01 and later](#driver-62101-and-later). To raise MSVDD voltage
 limits there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 </details>
@@ -340,7 +342,7 @@ active limits. It is a driver policy setting, not measured current or proof of
 the regulator's physical protection threshold.
 
 **Unlock OCP limits** expands the editable range beyond the firmware default
-where supported; it is unavailable on driver 621.01 and later. Reset restores
+where supported; it is unavailable on RTX 50 with driver 621.01 and later. Reset restores
 this rail's firmware current limit. To raise that limit, use the BIOS override
 [MSVDD current limit](#current-limits).
 
@@ -423,8 +425,8 @@ Applied is the requested limit, not measured current. Reset restores the
 driver-reported default. Profiles and Overview include this setting; disabling
 the tile or closing mVolt+ does not undo it.
 
-On driver 621.01 and later only the main limit is used; the auxiliary limit is
-unavailable. See [Driver 621.01 and later](#driver-62101-and-later).
+On RTX 50 with driver 621.01 and later, only the main limit is used; the
+auxiliary limit is unavailable. See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 
@@ -444,6 +446,11 @@ the REL to ALT/OP gap to every rail, usually 20 mV. If the rails' gaps differ,
 the smallest one counts. A REL raised in the
 BIOS override gets the same headroom on top; see
 [Raising voltage and OCP on driver 621.01 and later](#raising-voltage-and-ocp-on-driver-62101-and-later).
+
+With BIOS override **Voltage offsets** turned on (RTX 50, driver 621.01 and
+later), Voltage boost is held at 0 % until mVolt+ verifies them. After that,
+mVolt+ applies Voltage boost itself: it raises REL by its share of the smallest
+ALT/OP − REL gap.
 
 Voltage boost is checked separately from voltage-limit editing and may also
 be available on older GeForce cards. Availability depends on the GPU and driver.
@@ -514,8 +521,8 @@ duty remains after exit. [Compare the fan modes](#fan-control-and-persistence).
 **Boost lock** immediately requests the GPU's boost performance mode instead of
 normal idle downclocking. It can raise idle power consumption. It does not remove
 voltage, power or thermal limits, nor guarantee a particular frequency.
-Click it again to release the request. Boost lock is an immediate action and is
-not stored in either normal profiles or full snapshots.
+Click it again to release the request. Boost lock acts immediately; profiles
+saved while it is on restore it.
 
 Set a global **Toggle Boost Lock** shortcut in [Settings → Hotkeys](#hotkeys).
 It works while mVolt+ is running, including in the tray.
@@ -721,26 +728,31 @@ A saved **0 mV** offset means no offset. It does not ask mVolt+ to run Reset lat
 
 ### Driver 621.01 and later
 
-Starting with driver 621.01, NVIDIA no longer applies NVVDD/MSVDD voltage-limit
-offsets, a raised OCP maximum or the board-current auxiliary limit. The driver
-accepts these writes and reports success, but the GPU keeps its previous
-limits; the limits appear to be enforced below the driver. mVolt+ disables
-these controls on 621.01 and (probably) later drivers:
+On RTX 50 cards, driver 621.01 and later no longer apply NVVDD/MSVDD
+voltage-limit offsets, a raised OCP maximum or the board-current auxiliary
+limit. The driver accepts these writes and reports success, but the GPU keeps
+its previous limits; the limits appear to be enforced below the driver. On
+RTX 50 with these drivers, mVolt+ disables:
 
 - **Core voltage limits** and **MSVDD voltage limits**, including OV. Both cards
   show **Unavailable with this driver**.
 - **XOC voltage range** and **Unlock OCP limits** in Settings.
 - The auxiliary limit in **Board input current limit**; the main limit still
-  works.
+  works up to the stock limit. Raise that with the
+  [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
-Everything else is unaffected. Driver 617.42, the latest before the 621 branch,
+Everything else is unaffected. RTX 20, 30 and 40 cards keep these controls on
+621.01 and later. On RTX 50, driver 617.42, the latest before the 621 branch,
 and all earlier drivers support every control; mVolt+ enables them
 automatically there. Profiles with voltage limits still apply on 621.01 and
 later; the voltage limits are skipped and a note is shown. A BIOS override
 saved on an older driver stays active, and **Remove BIOS override** is always
 available.
 
-To raise voltage limits or OCP on these drivers, use the BIOS override; see
+To use the voltage-limit cards again, turn on **Voltage offsets (experimental)**
+in the BIOS override. Once mVolt+ verifies them, both cards, **XOC voltage
+range**, profiles and the CLI rail options work as on older drivers. To raise
+voltage limits or OCP on these drivers, use the BIOS override; see
 [Raising voltage and OCP on driver 621.01 and later](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 ## V/F Curve Editor
@@ -853,8 +865,8 @@ clock** is unavailable while a GPU clock-range lock is active; release that rang
 first. A voltage-point lock can coexist with the GPU clock range. Other GPU
 limits still apply, so a lock does not guarantee the measured clock or voltage.
 
-The lock buttons act immediately and are not saved in profiles or full snapshots.
-They remain applied after exit until released or cleared by the driver.
+The lock buttons act immediately. Profiles saved while a lock is held restore it.
+Locks remain applied after exit until released or cleared by the driver.
 **Reset all** releases them; **Reset V/F curve** only resets curve offsets.
 
 ## Fan control and persistence
@@ -875,6 +887,14 @@ hide the window while mVolt+ continues controlling the fans.
 The editor's **mVolt / GPU** selector chooses the controller to edit. Switching
 views keeps pending edits and does not apply anything. In **mVolt** mode, drag
 the graph or enter each point's **Temperature** and **Duty** directly.
+
+With more than one fan channel, the **All fans** menu picks the curve to edit:
+**All fans** edits the shared curve, and **Fan 1**, **Fan 2** and so on select
+one fan. For one fan, turn on **Own curve** to give it its own curve, starting
+from the shared points; turning it off removes that curve. Fans without their
+own curve follow the shared one, and other curves are drawn faintly behind the
+edited one. The **Enabled** switch and fall hysteresis stay shared. With own
+curves applied, the fan tile reads **Per-fan curves**.
 
 ![mVolt software fan curve](../assets/mvolt-fan-curve.png)
 
@@ -903,17 +923,18 @@ firmware response and reset/reboot persistence depend on the hardware.
 3. Choose the fall hysteresis.
 4. Click **Apply**. Pending edits do not replace the running curve before Apply.
 
-The software curve drives all reported channels together within their shared
-supported duty range. A 0% point returns the fans to automatic control where
+Without own curves, the software curve drives all reported channels together
+within their shared supported duty range; with own curves, each channel uses its
+own range. A 0% point returns the fans to automatic control where
 the GPU cannot stop them.
 To return to firmware control, set the curve to **Disabled** and press **Apply**,
 or use the dashboard's immediate **Reset to auto**. The fan-curve switch starts
 or stops automatic fan control when you press Apply, even if no curve points
 changed.
 
-**Reset curve** restores and immediately applies the default points and hysteresis,
-while keeping the curve's **Enabled** switch as it is. It differs from Reset
-to auto.
+**Reset curve** restores and immediately applies the default points of the shown
+curve, and with **All fans** also the default hysteresis, while keeping the
+curve's **Enabled** switch as it is. It differs from Reset to auto.
 
 </details>
 
@@ -973,10 +994,11 @@ changes only power, that curve and those fan settings stay active. A full snapsh
 instead restores all its saved settings, so it can replace tuning from
 another profile or application.
 
-Boost lock and the V/F editor's voltage-point and maximum-clock locks are
-immediate actions, excluded from both modes. Applying a profile does not request
-or release them. The separate **GPU clock range** setting and saved V/F curve
-edits remain part of profiles. Toggling Boost lock keeps the active profile name.
+Both modes save held clock locks: Boost lock or the V/F editor's voltage point,
+plus a maximum-clock limit. A normal profile without a lock leaves the current
+lock alone; a full snapshot restores its saved lock state. A profile cannot
+combine a locked **GPU clock range** with a maximum-clock limit. **Reset all**
+releases the locks.
 
 A snapshot can restore the default power limit even if the tile was disabled
 when saved, as long as that was the value reported by the GPU. Disabling a tile
@@ -1064,6 +1086,16 @@ profile at logon** makes it the startup profile. **Load for editing** stages its
 settings on the dashboard without applying them. Profile changes save in the
 background, with feedback in the dashboard status bar.
 
+In **Details** and the **Save current as…** preview, an NVVDD or MSVDD offset
+can have one colour: the accent colour marks a limit the active BIOS override
+changed, amber marks offsets that no longer fit, and grey numbers are offsets
+the driver ignores. Hover an offset for the voltage it gives now, the BIOS
+override change or why it does not fit. Apply refuses offsets that do not fit;
+fix them with **Load for editing**.
+
+Setting `"profile_edit_button": true` in `%LOCALAPPDATA%\mVolt+\appearance.json`
+adds a pen before **Details** that runs **Load for editing** directly.
+
 ![Profile selector](../assets/mvolt-profile-menu.png)
 
 ![Profile details](../assets/mvolt-profile-details.png)
@@ -1087,6 +1119,11 @@ profile is currently identified as active; the header **Save** then opens
 Both modes save applied curve and fan settings, leaving out pending changes.
 A running fan curve's changing duty is a live reading, not a pending edit.
 Applying a normal profile with fan control disabled leaves a running fan curve alone.
+
+Own fan curves are saved by fan ID. Apply refuses a profile with a curve for a
+fan this GPU does not report and asks you to **Load it for editing, set the
+fans, then Overwrite.** After **Load for editing**, an Apply, Save or Overwrite
+drops curves for fans the GPU does not report.
 
 ### Global profile shortcuts
 
@@ -1347,19 +1384,34 @@ a narrow single-column layout, on later launches and after Windows logon.
 If the saved monitor is unavailable or its work area is smaller, the window is
 moved or fitted to the available display. Maximized state is saved separately.
 
-**About** and **Debug report…** are in General. Tray preferences are
-explained in [Startup and tray](#startup-and-tray). Tile visibility lives in
-**Sections → Show/Hide tiles**. Choose the profile save mode in the save form.
+**About**, **Debug report…** and **Check for updates** are in General. Tray
+preferences are explained in [Startup and tray](#startup-and-tray). Tile
+visibility lives in **Sections → Show/Hide tiles**. Choose the profile save
+mode in the save form.
 Debug report creates a local diagnostic report; it is not sent automatically.
 About shows the version, a link to the project page and third-party notices,
 including the license text of the included PawnIO modules.
 
+**Check for updates** asks GitHub for the latest release; a check downloads
+nothing. If a newer release exists, the button shows **Update to** and its
+version. Clicking it downloads the release, checks its SHA-256 against the
+digest GitHub lists and restarts mVolt+. Tuning is not changed, and a running
+software fan curve goes on in the new copy. Updating is held while a GPU
+restart is pending or mVolt+ is busy; a click then shows the reason. Updating
+a [startup copy](#startup-and-tray) also updates the executable it was made
+from, if that file still matches the copy. Checking needs internet access.
+
+**Check for updates at startup** (off by default) checks quietly when mVolt+
+starts; a failed check retries once, just as quietly, five minutes later. When
+it finds a newer release, the header **Settings** button shows a dot with the
+hover help **Update available:** and the version.
+
 **Reset app preferences** restores this GPU's app preferences to fresh-install
 defaults: no Quick tuning pins, all sections expanded and tiles visible, voltage
 range sliders, default sizing/theme, monitoring and advanced options. It also
-clears the new-profile mode choice, logon profile selection and start-in-tray
-option. Saved profiles, currently applied GPU settings and the accepted initial
-warning are kept. Use
+clears the new-profile mode choice, logon profile selection, start-in-tray
+option and **Check for updates at startup**. Saved profiles, currently applied
+GPU settings and the accepted initial warning are kept. Use
 the dashboard's **Reset all** to reset GPU tuning instead.
 
 ### Monitoring and RTSS
@@ -1447,22 +1499,26 @@ pin one. Existing saved pins are preserved.
 
 ## Advanced tuning
 
-The three range options change the values mVolt+ permits you to edit. They do not establish
+The two range options change the values mVolt+ permits you to edit. They do not establish
 that higher values are appropriate for your hardware.
 
-All three start off in a new configuration. Saved choices are restored. mVolt+
+Both start off in a new configuration. Saved choices are restored. mVolt+
 can also open a wider range to accommodate settings already active on the GPU;
 that does not apply new values. The Expert visibility preset does not enable
 these options.
 
 | Option | What enabling it changes | What disabling it can do |
 | --- | --- | --- |
-| **Extended voltage offsets** | Expands per-domain voltage-demand editing beyond the ordinary −25…+50 mV range | Brings out-of-range applied values and pending targets back within the ordinary range |
 | **Unlock OCP limits** | Allows output-current targets above the firmware default within the supported driver range | Restores above-default applied OCP limits to their defaults before closing the range |
 | **XOC voltage range** | Allows voltage limits up to the maximum reported for each rail, or 1.25 V if no valid maximum is reported | Can lower existing rail limits to the standard range |
 
-**Unlock OCP limits** and **XOC voltage range** are unavailable on driver 621.01
-and later; see [Driver 621.01 and later](#driver-62101-and-later). To raise
+**Core**, **XBAR**, **SYS** and **Video voltage offset** need no range option:
+mVolt+ sets no limit of its own for voltage demand, and their sliders widen
+past your target.
+
+On RTX 50 with driver 621.01 and later, **Unlock OCP limits** is unavailable,
+and **XOC voltage range** is unavailable until BIOS override **Voltage offsets**
+are verified; see [Driver 621.01 and later](#driver-62101-and-later). To raise
 voltage limits or OCP there, use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 **Enabling these options alone does not apply new tuning values.** Disabling
@@ -1498,7 +1554,7 @@ Open **Settings → Advanced tuning → BIOS override**. The window has four tab
 | --- | --- |
 | **Clocks** | Minimum and maximum offsets for Core, Memory, XBAR, SYS and Video |
 | **Power & current** | Power limit, board input current limit, NVVDD and MSVDD current limits |
-| **Voltage** | NVVDD and MSVDD REL, ALT/OP, OV and VMIN voltage limits, and Speedo |
+| **Voltage** | NVVDD and MSVDD REL, ALT/OP, OV and VMIN voltage limits, Black-screen fix, Voltage offsets and Speedo |
 | **Fans** | Logical fan-channel count and PWM frequency |
 
 A dot on a tab marks entries there that are not saved yet.
@@ -1529,7 +1585,8 @@ to get a BIOS copy and this persistence.
 
 Clock, power and board input current limits change the available tuning range;
 set the actual target on the dashboard afterwards. Voltage limits, current
-limits, Speedo and fan settings work by themselves after the restart.
+limits, Speedo, Black-screen fix and fan settings work by themselves after the
+restart.
 
 | Column | Meaning |
 | --- | --- |
@@ -1558,7 +1615,8 @@ as drafts where supported. Review them and choose **Save limits** to use the new
 
 ### Voltage limits
 
-The **Voltage** tab sets each rail's voltage limits in mV:
+The **Voltage** tab sets each rail's voltage limits in mV, followed by two
+On/Off rows:
 
 | Row | What it sets |
 | --- | --- |
@@ -1566,6 +1624,8 @@ The **Voltage** tab sets each rail's voltage limits in mV:
 | **ALT/OP** | Operating limit, the top of Voltage Boost |
 | **OV** | Overvoltage limit, the highest voltage the card allows |
 | **VMIN** | Minimum voltage limit, the lowest voltage the card uses |
+| **Black-screen fix** | On lets the driver lower MSVDD REL by 50 mV; Off removes this after a GPU restart |
+| **Voltage offsets (experimental)** | On makes the dashboard voltage-limit offsets work again on RTX 50 with driver 621.01 and later |
 
 On most desktop RTX 50 BIOSes, **REL** sets the limit your card calculates.
 On other BIOSes it only caps that limit, so raising it above the calculated
@@ -1584,13 +1644,23 @@ the gap.
 - **Active value** is the limit the driver reports now, without runtime offsets;
   for **REL**, also without Voltage Boost.
   MSVDD's actual limit is lower by its **Reported Vrel offset** (Telemetry →
-  GPU info), −50 mV on the tested RTX 5090.
+  GPU info), −50 mV on the tested RTX 5090 while **Black-screen fix** is On.
 - **Theoretical max.** is the rail's OV limit for REL and ALT/OP, and the
   voltage regulator's maximum for OV.
 
 These are limits, not measured voltages or safe operating values. On some
 BIOSes, for example laptop and XOC BIOSes, some rows are unavailable or
 calculated.
+
+**Black-screen fix** sits between MSVDD VMIN and Speedo and is always shown.
+**Default** is the driver's choice before mVolt+ changed it. Like Speedo, it
+saves by itself with either method, without a BIOS copy. While a runtime
+offset or a pending fix change moves MSVDD REL, its entry shows **→** and the
+REL the card runs at; hover it for the values at Voltage Boost 0 % and 100 %.
+
+**Voltage offsets (experimental)** follows it on RTX 50 with driver 621.01 and
+later, and while the active BIOS has them, so **Off** stays available. See
+[Raising voltage and OCP on driver 621.01 and later](#raising-voltage-and-ocp-on-driver-62101-and-later).
 
 ### Current limits
 
@@ -1602,10 +1672,11 @@ rail's default current limit.
 
 ### Raising voltage and OCP on driver 621.01 and later
 
-On driver 621.01 and later, the dashboard voltage limits, **XOC voltage range**
+On RTX 50 with driver 621.01 and later, the dashboard voltage limits, **XOC voltage range**
 and **Unlock OCP limits** are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
-The BIOS override still raises voltage limits and OCP there. Neither method
-flashes the card.
+The BIOS override still raises voltage limits and OCP there, and its
+**Voltage offsets (experimental)** row makes the dashboard voltage limits work
+again. Neither method flashes the card.
 
 ![BIOS override Voltage tab](../assets/mvolt-bios-voltage.png)
 
@@ -1638,12 +1709,34 @@ on the **Power & current** tab, then save and restart the same way. On the
 tested RTX 5090, NVVDD 520 A (stock 480 A) read back active; behavior under load
 is not yet confirmed.
 
+A higher **Board input current limit** on the same tab also raises the BIOS
+default and auxiliary current limits, which otherwise keep board input current
+at its stock value on these drivers. The card then starts at the new limit; the
+dashboard tile can still lower it. An override saved with v0.50.8 or earlier
+gets this once its board input current limit is changed again.
+
+To use the dashboard voltage limits again:
+
+1. In BIOS override, choose the **Voltage** tab and set **Voltage offsets
+   (experimental)** to **On**.
+2. Choose **Save limits**, then **Restart GPU** or **Restart Windows**, and
+   wait for **The new limits are active and verified.**
+3. If **Voltage boost** is above 0 %, set it to 0 % and apply it. Until then,
+   the voltage-limit cards show **Set Voltage Boost to 0 %**.
+4. Once mVolt+ verifies the offsets, **Core voltage limits**, **MSVDD voltage
+   limits** and **XOC voltage range** work as on older drivers.
+
+Until the offsets are verified, Voltage boost is held at 0 %: profiles skip a
+higher value and the CLI refuses `--boost` above 0. After that, Voltage boost
+is mVolt+'s own; it raises REL by its share of the smallest ALT/OP − REL gap.
+To remove the offsets, set the row to **Off**, save and restart.
+
 To undo, choose **Use original limits / Remove BIOS override**, restart as
 offered and wait for **The initial state has been restored and verified.**
 
-This was tested on an RTX 5090 with driver 621.01. Other cards, laptops and
-older drivers are not yet tested. Raise limits in small steps and check
-stability.
+Raising voltage limits and OCP was tested on an RTX 5090 with driver 621.01.
+Other cards, laptops and older drivers are not yet tested. Raise limits in
+small steps and check stability.
 
 ### BIOS copy
 
@@ -1691,6 +1784,14 @@ GPU from starting. Prefer a copy from your own card.
   state or removes the saved override, as described in its hover help.
 - **Revert changes**, when offered, restores the last confirmed working state.
 - Finish the requested GPU or Windows restart and wait for confirmation.
+
+An override that mVolt+ did not save, for example from another tool, shows
+**BIOS override not managed by mVolt+**. mVolt+ starts from it, so **Use
+original limits / Remove BIOS override** returns to that override. If another
+tool replaces or removes an override saved by mVolt+, **Use current BIOS** can
+keep the BIOS that is active now as the new starting state, without writing
+anything; **Revert changes** and **Use original limits / Remove BIOS override**
+stay offered.
 
 The recorded starting state may already include earlier modifications; it is
 not necessarily factory stock. Dashboard **Reset all** does not remove saved
@@ -1758,9 +1859,11 @@ particular voltage rail or editor.
 The app checks support separately for each control and sensor, including
 supported interfaces in older NVIDIA drivers. Available features depend on
 your GPU and driver; one unavailable feature does not disable the others.
-On driver 621.01 and later, the dashboard voltage limits, OCP unlock and the
-board-current auxiliary limit are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
-The BIOS override still raises voltage limits and OCP there.
+On RTX 50 with driver 621.01 and later, the dashboard voltage limits, OCP unlock
+and the board-current auxiliary limit are unavailable; see [Driver 621.01 and later](#driver-62101-and-later).
+The BIOS override still raises voltage limits and OCP there, and its **Voltage
+offsets** row makes the dashboard voltage limits work again. Other GPUs keep
+these controls.
 
 Some drivers provide fewer telemetry details or cannot report exact thermal
 input values. Missing readings stay unavailable. Where supported, thermal
@@ -1841,7 +1944,7 @@ They do not create a dashboard draft. Unspecified controls are left untouched.
 | `--boost` | Voltage Boost percentage |
 | `--msvdd-clock-ratio` | NVVDD/MSVDD clock propagation ratio |
 | `--nvvdd-ocp` / `--msvdd-ocp` | Rail output-current limit in amps |
-| `--boost-lock` | `on` or `off`; immediate action, not saved in profiles |
+| `--boost-lock` | `on` or `off`; immediate action |
 | `--clock-range` | `MIN,MAX` in MHz, or `default` to release the lock |
 | `--thermal-input-0` through `--thermal-input-5` | Signed fixed temperature in Celsius, or `default` to disable that channel's substitution |
 | `--xoc` | Selects the extended voltage-ceiling mode for the request |
@@ -1920,7 +2023,7 @@ selected GPU:
 ```
 
 Normal profiles apply settings enabled in the profile. Full snapshots also
-restore saved values for disabled controls. Boost lock is not saved in either mode.
+restore saved values for disabled controls. Both modes restore a saved clock lock.
 A one-shot CLI profile can apply fixed fan duty, firmware auto or supported GPU
 fan policies. It refuses an active software fan curve because that needs mVolt+
 to keep running. Use the GUI/tray and configured logon behavior for software
@@ -2016,10 +2119,12 @@ See [Voltage limits and measured voltage](#voltage-limits-and-measured-voltage).
 <details>
 <summary><strong>Voltage limits show Unavailable with this driver</strong></summary>
 
-Driver 621.01 and later no longer apply voltage-limit offsets, a raised OCP
-maximum or the board-current auxiliary limit. To raise voltage limits or OCP,
-use the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later), or
-use driver 617.42 or earlier. See [Driver 621.01 and later](#driver-62101-and-later).
+On RTX 50, driver 621.01 and later no longer apply voltage-limit offsets, a
+raised OCP maximum or the board-current auxiliary limit. Turn on **Voltage
+offsets (experimental)** in the [BIOS override](#raising-voltage-and-ocp-on-driver-62101-and-later)
+to use the cards again, raise voltage limits or OCP there, or use driver 617.42
+or earlier. If the cards show **Set Voltage Boost to 0 %**, apply 0 % Voltage
+boost first. See [Driver 621.01 and later](#driver-62101-and-later).
 
 </details>
 
