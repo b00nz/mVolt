@@ -16,25 +16,28 @@ experimental; available controls depend on the GPU, VBIOS and driver.
 
 Run the executable; no installer is needed. Tuning requires administrator
 privileges. **Check for updates** in **Settings → General** finds a newer
-release and installs it in place.
+release and installs it in place. An empty `portable.txt` next to it keeps
+settings and profiles in a `Data` folder beside it. **Uninstall mVolt+** in
+**Settings → General** removes everything mVolt+ set up; then delete the
+executable and restart Windows.
 
 This README and the guide cover **mVolt+ v0.50.x**. Check the release page for
 the currently downloadable version.
 
 ## v0.50.x highlights
 
-- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power and current limits, NVVDD/MSVDD REL, ALT/OP, OV and VMIN voltage limits and Speedo, on four tabs with BIOS defaults beside active values and Restart GPU recovery. On RTX 50 with driver 621.01 and later, it raises voltage and OCP, and experimental **Voltage offsets** make the dashboard voltage limits work again. **Black-screen fix** switches the driver's −50 mV MSVDD REL change on or off. [Guide](docs/guide.md#bios-override) · [Voltage on 621.01+](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
+- **BIOS override:** Direct and BIOS-file methods for clock-offset ranges, power and current limits, NVVDD/MSVDD REL, ALT/OP, OV and VMIN voltage limits and Speedo, on four tabs with BIOS defaults beside active values and Restart GPU recovery. RTX 30 support is experimental and covers power, NVVDD OCP, voltage limits, clock ranges and fans. On RTX 50 with driver 621.01 and later, it raises voltage and OCP, and experimental **Voltage offsets** make the dashboard voltage limits work again. **Black-screen fix** switches the driver's −50 mV MSVDD REL change on or off. [Guide](docs/guide.md#bios-override) · [Voltage on 621.01+](docs/guide.md#raising-voltage-and-ocp-on-driver-62101-and-later).
 - **Power and current:** percentage or watt-based power control, separate board-input current control, and profile and Overview support.
-- **Fan control:** a unified mVolt / GPU editor with temperature, PWM and RPM fields, per-fan software curves, saved GPU policies and startup Apply, then exit. BIOS override adds fan layout and PWM frequency controls.
+- **Fan control:** a unified mVolt / GPU editor with temperature, PWM and RPM fields, per-fan software curves that follow GPU temperature, hotspot or both, saved GPU policies and startup Apply, then exit. BIOS override adds fan layout and PWM frequency controls.
 - **Thermal limits:** GPU, hotspot and memory temperature limits in °C, with profile support and Reset.
 - **Curves:** Core and fabric V/F editing, Flatten above with Drop tail / Match tail and a warming preview, software fan curves, precise point selection and dragging, and improved curve preservation during Apply and Reset.
 - **Dashboard:** Standard and Minimal / Compact layouts, expandable fan and thermal rows, independent overvoltage switches and visibility, corrected sliders, memory, XBAR and SYS clock header readings, per-card Apply beside Reset and Enter-to-apply.
-- **Profiles:** normal profiles and full snapshots, saved clock locks, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing, editable names and shortcuts, and the applied profile name in `--status` JSON.
-- **Telemetry:** expanded GPU and memory temperatures, firmware-reported Vrel, ASIC information with Speedo and a copyable ECID, and older memory V/F model support.
-- **RTSS overlay:** GPU readings, profile and Boost Lock state, FPS, frame time, average FPS and lows, plus CPU and RAM readings through the optional PawnIO driver, with grouped settings, reorderable lines, custom colors and a preview.
-- **Shortcuts:** global profile shortcuts, Toggle Boost Lock and Toggle RTSS overlay, including tray operation.
+- **Profiles:** normal profiles and full snapshots, saved clock locks, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing or an optional classic Profile Manager, editable names and shortcuts, a startup profile menu, and the applied profile name in `--status` JSON.
+- **Telemetry:** expanded GPU and memory temperatures, firmware-reported Vrel, ASIC information with Speedo and a copyable ECID, older memory V/F model support, and per-pin 12V-2x6 connector readings from a WireView Pro II, MSI Ai1600TS / Ai1300TS power supplies or supported ASUS RTX 50 cards.
+- **RTSS overlay:** GPU readings, profile and Boost Lock state, FPS, frame time, average FPS and lows, plus CPU and RAM readings through the optional PawnIO driver, with grouped settings, reorderable lines, compact rows, renaming, custom colors and a preview.
+- **Shortcuts:** global profile shortcuts, Toggle Boost Lock, Toggle RTSS overlay and Toggle RTSS benchmark, including tray operation.
 - **Shunt multiplier:** correction for power and current readings, board-power Request and Runtime limits, and RTSS.
-- **Everyday use:** clearer hover help, accessible profile menus, background saves, fully drawn menus and windows, and improved window handling across displays and scaling changes.
+- **Everyday use:** portable mode, clearer hover help, accessible profile menus, background saves, fully drawn menus and windows, and improved window handling across displays and scaling changes.
 - **Recovery and compatibility:** improved Apply, Reset all, limit-method switching, startup recovery and restart handling, plus broader support for older GPUs and laptop power/current controls.
 
 [Release notes](https://github.com/b00nz/mVolt/releases) · [Get a BIOS copy](docs/guide.md#bios-copy)
@@ -116,13 +119,14 @@ curves are left out. Full snapshots save supported curves even when disabled.
 A profile that does not contain a curve leaves it unchanged.
 
 In **Settings → General**, enable **Start with Windows** and choose whether to
-**Start minimized to tray**. Choose the startup profile with **Apply this profile
-at logon** in the profile's Details; it applies either way. Enable **Apply startup
-profile, then exit** to close after applying it.
+**Start minimized to tray**. Choose the startup profile in the menu beside
+**Start with Windows**; it applies either way. With several GPUs, each applies its
+own startup profile. Enable **Apply startup profile, then exit** to close after
+applying it.
 Software fan curves require mVolt+ to stay running.
 Supported GPU fan policies can also be saved in profiles and used with Apply, then exit.
-Set **Toggle Boost Lock** and **Toggle RTSS overlay** in **Settings → Hotkeys**.
-Both work while mVolt+ is running, including in the tray.
+Set **Toggle Boost Lock**, **Toggle RTSS overlay** and **Toggle RTSS benchmark** in
+**Settings → Hotkeys**. They work while mVolt+ is running, including in the tray.
 
 [Profile guide](docs/guide.md#profiles) · [Startup and tray](docs/guide.md#startup-and-tray)
 
@@ -139,7 +143,9 @@ the window visible beside another application.
 
 Telemetry groups readings into Rails, Clocks, Power, P-states, Temperatures,
 Boost limits, Memory / PCIe and GPU info, opening on Rails by default. Memory / PCIe
-includes read-only memory timings on supported GB202 hardware.
+includes read-only memory timings on supported GB202 hardware. A 12V-2x6 tab shows
+each connector pin when a WireView Pro II, an MSI Ai1600TS / Ai1300TS power supply
+or a supported ASUS RTX 50 card provides the readings.
 Clock graphs show values on hover. Hotspot, firmware clock history and detailed
 limit reasons appear where supported. GPU info shows ASIC information, a copyable
 ECID and each rail's firmware-reported Vrel and offset.
@@ -148,8 +154,10 @@ RivaTuner Statistics Server is optional and only needed for its on-screen
 overlay. Choose the readings in **Settings → Monitoring**, including the applied
 profile, Boost Lock, clocks, temperatures, fan duty/RPM, power versus limit,
 GPU load, VRAM usage and frame statistics. Average FPS, 1% low and 0.1% low use
-RTSS benchmark recording. Grouped settings and an overlay preview help arrange the
-readings; drag a preview line to reorder it and right-click it for colors.
+RTSS benchmark recording, which **Toggle RTSS benchmark** starts and stops. Grouped
+settings and an overlay preview help arrange the readings; drag a preview line to
+reorder it and right-click it to rename it or change its colors. **Compact rows**
+groups the readings into rows.
 
 CPU clock, temperature and power, and DDR5 RAM temperature, need the free
 [PawnIO](https://pawnio.eu) driver, which you install separately. Other CPU and

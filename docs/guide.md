@@ -21,8 +21,8 @@ for details. Screenshots are from the v0.50.x series.
 | [V/F Curve Editor](#vf-curve-editor) | Core and MSVDD curves, point edits, profiles and Core locks |
 | [Fan control and persistence](#fan-control-and-persistence) | Fixed duty, firmware auto, curves and hysteresis |
 | [Profiles](#profiles) | Saving, applying, full snapshots, details and shortcuts |
-| [Startup and tray](#startup-and-tray) | Logon readiness, recovery and closing behavior |
-| [Telemetry](#telemetry) | Sensors, graphs, boost reasons, memory timings and PCIe |
+| [Startup and tray](#startup-and-tray) | Startup profile, logon readiness, recovery and closing behavior |
+| [Telemetry](#telemetry) | Sensors, graphs, boost reasons, memory timings, PCIe and 12V-2x6 pins |
 | [Overview](#overview) | A compact view of current settings |
 | [Settings and layout](#settings-and-layout) | Polling, RTSS, updates, themes, sizing and tile visibility |
 | [Advanced tuning](#advanced-tuning) | OCP unlock, XOC and shunt correction |
@@ -558,8 +558,9 @@ to Default when focus moves away; type **0** to request an actual fixed **0 °C*
 Reset followed by an unchanged Apply keeps Default. No verified input range is
 reported, so the tile does not invent slider endpoints.
 
-GPU temp replaces the reported GPU temperature. This affects mVolt+, its
-software fan curve and other tools that use the same temperature sensor.
+GPU temp replaces the reported GPU temperature. This affects mVolt+, the GPU
+temperature part of its software fan curve and other tools that use the same
+temperature sensor.
 
 **LN2 boost preset** fills GPU temp = +5 °C, Internal 3 = 0 °C, Internal 4 = −20 °C
 and Internal 5 = Default. It leaves Memory and Hotspot unchanged. Press **Apply** to send
@@ -877,7 +878,7 @@ Choose a mode based on who should adjust fan duty as temperature changes.
 | --- | --- | --- | --- |
 | **Firmware automatic** | GPU firmware | Firmware continues | Firmware continues |
 | **Fixed duty**, from the fan tile | Your applied percent target | Duty remains fixed | Last duty remains fixed |
-| **mVolt+ fan curve** | mVolt+, using GPU temperature | Curve tracks temperature | Tracking stops; last duty remains fixed |
+| **mVolt+ fan curve** | mVolt+, using GPU temperature, hotspot or both | Curve tracks temperature | Tracking stops; last duty remains fixed |
 | **GPU fan policies** (experimental) | GPU firmware | No software curve is required | mVolt+ does not reset the edited policy |
 
 **The mVolt software curve is not uploaded to firmware.** Saving its points in a
@@ -895,6 +896,14 @@ from the shared points; turning it off removes that curve. Fans without their
 own curve follow the shared one, and other curves are drawn faintly behind the
 edited one. The **Enabled** switch and fall hysteresis stay shared. With own
 curves applied, the fan tile reads **Per-fan curves**.
+
+Each curve, shared or a fan's own, has a **GPU temperature** part and a
+**Hotspot** part. The button under the graph shows the edited part; its menu
+lists both parts with their current readings and chooses the part to edit. The
+switch beside **Curve points** turns the edited part on or off, and the last
+part that is on can't be switched off. The first time Hotspot is switched on,
+it starts from the GPU points. With both parts on, the fans follow the higher
+duty.
 
 ![mVolt software fan curve](../assets/mvolt-fan-curve.png)
 
@@ -932,9 +941,10 @@ or use the dashboard's immediate **Reset to auto**. The fan-curve switch starts
 or stops automatic fan control when you press Apply, even if no curve points
 changed.
 
-**Reset curve** restores and immediately applies the default points of the shown
-curve, and with **All fans** also the default hysteresis, while keeping the
-curve's **Enabled** switch as it is. It differs from Reset to auto.
+**Reset curve** restores and immediately applies the default points of the
+edited part of the shown curve, and with **All fans** also the default
+hysteresis, while keeping the curve's **Enabled** switch as it is. It differs
+from Reset to auto.
 
 </details>
 
@@ -952,8 +962,11 @@ The default is **3 °C**, and you can adjust it.
 
 Pausing monitoring or hiding the dashboard does not stop an active curve's
 required temperature checks. If a temperature read fails, the controller holds
-the last duty until valid readings return. A driver reset can change fan state;
-the Applied reading shows the current setting.
+the last duty until valid readings return. Without a hotspot reading, a curve
+with its GPU part on follows GPU temperature alone, and a Hotspot-only curve
+hands its fans to the card's automatic control until the reading returns. A
+driver reset can change fan state; the Applied reading shows the current
+setting.
 
 ## Profiles
 
@@ -1075,16 +1088,27 @@ appear when you hover over it or select it with the keyboard.
 | Action | What it does |
 | --- | --- |
 | Click the profile name | Applies the saved profile immediately |
-| Details (info icon) | Opens the saved parameters, name, shortcut and logon option |
+| Load for editing (pen) | Stages the profile's settings on the dashboard without applying them |
+| Details (info icon) | Opens the saved parameters, name and shortcut |
 | Overwrite (disk) | Saves current applied settings into that profile after confirmation, keeping its save mode |
 | Delete (trash) | Removes the profile after confirmation |
 | Save current as… | Opens a new-profile form with a preview and save-mode choice |
 
 Use the mouse wheel or keyboard to navigate a long menu. In **Details**, edit
-the name and press Enter to save it, or capture a new shortcut. **Apply this
-profile at logon** makes it the startup profile. **Load for editing** stages its
-settings on the dashboard without applying them. Profile changes save in the
-background, with feedback in the dashboard status bar.
+the name and press Enter to save it, or capture a new shortcut. Its buttons match
+Profile Manager's: **Delete**, **Preview changes**, **Load for editing**, which
+stages its settings on the dashboard without applying them, and **Apply profile**.
+Profile changes save in the background, with feedback in the dashboard status bar. The
+startup profile is chosen in **Settings → General**; see
+[Startup and tray](#startup-and-tray).
+
+**Details** and the **Save current as…** form open on the main window and move
+with it. Drag the background to place one elsewhere; it opens on the main window
+again next time. Several can stay open at once, for example two profiles'
+**Details** beside the save form. With
+**Profile details** set to **Profile Manager** in
+[Appearance](#appearance-and-dashboard-organization), **Details** opens the
+Profile Manager on that profile instead.
 
 In **Details** and the **Save current as…** preview, an NVVDD or MSVDD offset
 can have one colour: the accent colour marks a limit the active BIOS override
@@ -1092,9 +1116,6 @@ changed, amber marks offsets that no longer fit, and grey numbers are offsets
 the driver ignores. Hover an offset for the voltage it gives now, the BIOS
 override change or why it does not fit. Apply refuses offsets that do not fit;
 fix them with **Load for editing**.
-
-Setting `"profile_edit_button": true` in `%LOCALAPPDATA%\mVolt+\appearance.json`
-adds a pen before **Details** that runs **Load for editing** directly.
 
 ![Profile selector](../assets/mvolt-profile-menu.png)
 
@@ -1120,6 +1141,7 @@ Both modes save applied curve and fan settings, leaving out pending changes.
 A running fan curve's changing duty is a live reading, not a pending edit.
 Applying a normal profile with fan control disabled leaves a running fan curve alone.
 
+Saved fan curves keep both their GPU temperature and Hotspot parts.
 Own fan curves are saved by fan ID. Apply refuses a profile with a curve for a
 fan this GPU does not report and asks you to **Load it for editing, set the
 fans, then Overwrite.** After **Load for editing**, an Apply, Save or Overwrite
@@ -1143,12 +1165,20 @@ or as a visible window. Enable **Apply startup profile, then exit** to close
 after successfully applying your selected startup profile. This option refuses
 profiles with a software fan curve, which requires mVolt+ to stay running.
 
-Choose the startup profile with **Apply this profile at logon** in that profile's
-**Details**; checking it also turns on Start with Windows. If a startup profile
-is configured, mVolt+ applies it automatically.
+Choose the startup profile in the menu beside **Start with Windows**. It lists
+**No profile** and this GPU's profiles; a choice saves when the list closes, and
+Escape keeps the saved one. The menu works while Start with Windows is on;
+turning that off greys the menu and keeps your choice. Choosing **No profile**
+keeps Start with Windows on, and the menu then shows it in amber. If a startup
+profile is configured, mVolt+ applies it automatically.
 Without one, the app starts without applying tuning. A successfully applied profile is
 shown by name; the header menu marks it with a green dot and the tray menu with
 a checkmark. Custom or changed settings leave the tray entries unchecked.
+
+With several GPUs, each GPU applies its own startup profile at logon, and one
+copy of mVolt+ stays open. A fan curve runs only on that copy's GPU: another
+GPU's startup profile with a fan curve is applied with automatic fans, and a
+notification says so.
 
 mVolt+ waits for the GPU to become ready before applying your startup profile.
 You do not need to open NVIDIA Control Panel. If application fails, mVolt+
@@ -1350,6 +1380,23 @@ maximum-safe-voltage recommendation. mVolt+ does not calculate a substitute valu
 
 </details>
 
+<details>
+<summary><strong>12V-2x6</strong> — per-pin power connector readings</summary>
+
+Shows the 12V-2x6 power connector pin by pin, with one section per device found:
+
+| Section | Device |
+| --- | --- |
+| **GRAPHICS CARD** | The per-pin sensor of ASUS RTX 50 cards that have one, plus PCIe slot power |
+| **WIREVIEW PRO II** | A Thermal Grizzly WireView Pro II connected over USB, with its temperature |
+| **PSU** | An MSI MPG Ai1600TS or Ai1300TS power supply connected over USB, with both connectors side by side, input and output power, temperature and fan speed |
+
+Each section shows the connector's power, the pin carrying the most current and
+a per-pin table. A pin above its 9.5 A rating turns red. The tab shows while one
+of these devices is found; a reading that stops updating shows empty values.
+
+</details>
+
 Telemetry updates live and keeps recent readings while mVolt+ is running.
 Closing the app clears that history. All monitoring views use the refresh
 interval in **Settings → Monitoring**.
@@ -1385,7 +1432,8 @@ If the saved monitor is unavailable or its work area is smaller, the window is
 moved or fitted to the available display. Maximized state is saved separately.
 
 **About**, **Debug report…** and **Check for updates** are in General. Tray
-preferences are explained in [Startup and tray](#startup-and-tray). Tile
+preferences and the startup profile menu are explained in
+[Startup and tray](#startup-and-tray). Tile
 visibility lives in **Sections → Show/Hide tiles**. Choose the profile save
 mode in the save form.
 Debug report creates a local diagnostic report; it is not sent automatically.
@@ -1408,11 +1456,22 @@ hover help **Update available:** and the version.
 
 **Reset app preferences** restores this GPU's app preferences to fresh-install
 defaults: no Quick tuning pins, all sections expanded and tiles visible, voltage
-range sliders, default sizing/theme, monitoring and advanced options. It also
-clears the new-profile mode choice, logon profile selection, start-in-tray
-option and **Check for updates at startup**. Saved profiles, currently applied
-GPU settings and the accepted initial warning are kept. Use
+range sliders, default sizing/theme, **Compact** profile details, monitoring and
+advanced options. It also clears the new-profile mode choice, startup profile,
+start-in-tray option and **Check for updates at startup**. Saved profiles,
+currently applied GPU settings and the accepted initial warning are kept. Use
 the dashboard's **Reset all** to reset GPU tuning instead.
+
+**Uninstall mVolt+** removes mVolt+ from this PC after you confirm: the BIOS
+override on every GPU, **Start with Windows**, the BIOS-override recovery data,
+then all profiles and settings. Fans mVolt+ controls go back to automatic. If a
+BIOS override or Start with Windows can't be removed, it stops there and keeps
+your profiles and settings. A data folder that also holds your own files, or
+that links to another place, is kept and listed. The executable stays: the last
+message names it, and **Open file location** shows it so you can delete it.
+Other settings mVolt+ applied stay on the GPU until you restart Windows. A GPU
+that isn't connected, such as an unplugged eGPU, keeps its BIOS override, so
+remove that first.
 
 ### Monitoring and RTSS
 
@@ -1437,7 +1496,14 @@ find each option; the **Overlay preview** shows the selected lines. Missing or
 stale GPU readings are omitted. VRAM usage is for the whole GPU, not just the current game.
 
 Drag a line in the preview to change its position in the overlay. Right-click a
-line to set its label or value color, or to reset them.
+line for **Rename…**, **Label color…**, **Value color…** and **Reset**. Names
+can have up to 16 characters; an empty name restores the default. **Reset**
+restores the name and both colors. The header line takes only a color.
+
+**Compact rows** in the preview's top row groups the readings into one overlay
+row per device: PROFILE, BOOST LOCK, GPU, MEM, FAN, RAM, CPU, WIREVIEW, PSU and
+FPS. Dragging and right-clicking then act on whole rows. Lines and rows keep
+their own names and colors.
 
 The **CPU** and **Memory** groups add system readings:
 
@@ -1445,28 +1511,39 @@ The **CPU** and **Memory** groups add system readings:
 | --- | --- |
 | CPU load, RAM used / total, RAM speed | Windows |
 | CPU clock, CPU effective clock, CPU temperature, CPU power, CPU voltage (VID) | [PawnIO](https://pawnio.eu) |
+| RAM temperature (hottest DDR5 module) | [PawnIO](https://pawnio.eu) |
 
 **CPU clock** is the clock while the cores are running; **CPU effective clock**
 averages all cores, and idle time lowers it.
-| RAM temperature (hottest DDR5 module) | [PawnIO](https://pawnio.eu) |
 
 PawnIO is a free signed driver that you install separately; mVolt+ includes only
 its small read modules. Both groups show the PawnIO status, and **Get PawnIO ↗**
 opens its download page while it is missing. mVolt+ releases PawnIO when no
 PawnIO line is selected, so it can be updated or removed without restarting.
 
+The **12V-2x6** group adds the per-pin currents from the card sensor, a
+WireView Pro II or an MSI PSU, the WireView temperature and the PSU's input and
+output power; see the [Telemetry](#telemetry) 12V-2x6 page for the devices. A
+pin above 9.5 A turns red.
+
 The **Frame rate** group adds FPS, frame time, average FPS, 1% low and 0.1% low.
-RTSS supplies these values in the target application. Start RTSS benchmark
-recording for average and low statistics. The preview shows `--` for frame
+RTSS supplies these values in the target application. Average FPS and the lows
+are measured during an RTSS benchmark recording, which the **Toggle RTSS
+benchmark** [hotkey](#hotkeys) starts and stops. The preview shows `--` for frame
 statistics; their values appear in the overlay. These options do not add an FPS
 history to the Telemetry window.
 
 ### Hotkeys
 
-Choose **Toggle Boost Lock** or **Toggle RTSS overlay** and press a combination
-such as **Ctrl+F6**. The binding saves immediately for this GPU; Backspace or
-Delete clears it. Both work while mVolt+ runs, including in the tray.
+Choose **Toggle Boost Lock**, **Toggle RTSS overlay** or **Toggle RTSS
+benchmark** and press a combination such as **Ctrl+F6**. The binding saves
+immediately for this GPU; Backspace or Delete clears it. All three work while
+mVolt+ runs, including in the tray.
 Toggling RTSS changes overlay visibility and keeps the selected readings.
+**Toggle RTSS benchmark** starts an RTSS benchmark recording for the games
+already running, and pressing it again stops it. Average FPS and the 1% and 0.1% lows are
+measured during the recording, and the results stay until the next start. RTSS
+must be running.
 Profile shortcuts are set in [Details](#global-profile-shortcuts).
 Duplicate bindings and combinations that interfere with ordinary typing are refused.
 
@@ -1476,6 +1553,9 @@ Choose **Midnight** (the default), Graphite, Dark or Light, or customize the sha
 colors. Colors and the layout choice are shared across GPUs for this Windows user.
 **Reset colors** restores the default palette without changing tuning.
 **Voltage controls** selects the [range slider or offset view](#range-slider-and-offset-views).
+**Profile details** chooses what **Details** in the Profiles menu opens:
+**Compact** (the default) opens the compact popup, and **Profile Manager** opens
+the Profile Manager window on that profile.
 
 **Layout → Standard** shows cards with detailed readouts. **Minimal / Compact**
 uses compact rows with the same tuning controls and shared Apply/Discard actions.
@@ -1598,6 +1678,10 @@ restart.
 Each control is checked independently. An unavailable row leaves the other
 supported controls usable; hover over **Unavailable** for the reason. The window
 scrolls on smaller displays.
+
+RTX 30 cards have fewer rows: **Board input current limit** and **MSVDD current
+limit** are unavailable, **VMIN** is calculated, and REL, ALT/OP and OV are
+offered where the BIOS gives them a fixed value.
 
 **Speedo** on the **Voltage** tab overrides the Speedo value the driver reports
 for this GPU; its effect on voltage and clocks depends on the driver and
@@ -1778,6 +1862,10 @@ This option relaxes the original-BIOS match; it does not make another board's
 BIOS compatible or unlock every control. An incompatible BIOS can prevent the
 GPU from starting. Prefer a copy from your own card.
 
+If Windows cannot start the GPU (Code 43) after **Restart GPU**, BIOS override
+says so and offers restarting the GPU or Windows. **Remove BIOS override** stays
+available.
+
 ### Restoring limits
 
 - **Use original limits / Remove BIOS override** restores the recorded starting
@@ -1805,7 +1893,8 @@ the offered actions.
 Before going back to an older mVolt+ version, remove the BIOS override and
 restart. An older version may not read limits saved by this one.
 
-Keep `%PROGRAMDATA%\mVolt+\NativeLimits`. Deleting it does not remove an active
+Keep `%PROGRAMDATA%\mVolt+\NativeLimits`, or `Data\mVolt+\NativeLimits` in
+[portable mode](#files-and-logging). Deleting it does not remove an active
 override and can lose the saved starting state. If it is missing, reopen mVolt+
 and follow the recovery action offered in this dialog; **Revert changes** can
 remove an override that no longer has recovery data. When offered, **Repair
@@ -1823,7 +1912,8 @@ it; otherwise restart Windows. Nothing restarts automatically.
 
 If the saved recovery data is intact, open an administrator PowerShell window
 in the mVolt+ folder. Replace `RECORD_ID` with the 64-character folder name for
-the affected GPU under `%PROGRAMDATA%\mVolt+\NativeLimits`:
+the affected GPU under `%PROGRAMDATA%\mVolt+\NativeLimits` (portable mode:
+`Data\mVolt+\NativeLimits`):
 
 ```powershell
 .\mVolt+.exe --recover-limits RECORD_ID | Out-Host
@@ -1963,9 +2053,9 @@ calculations; channel 2 replaces memory temperature; channel 0 sets the
 temperature the hotspot limit sees.
 Use `default` to restore the normal source; entering `0` explicitly substitutes
 0 °C. Multiple thermal options are applied together, with unmentioned
-channels left untouched. Channel 1 replaces the GPU temperature input; a running
-software fan curve uses that fixed reading. For example, this command resets
-only channel 4:
+channels left untouched. Channel 1 replaces the GPU temperature input; the GPU
+temperature part of a running software fan curve uses that fixed reading. For
+example, this command resets only channel 4:
 
 ```powershell
 .\mVolt+.exe --thermal-input-4 default | Out-Host
@@ -2039,7 +2129,7 @@ curves. `--diagnostic` creates a local compatibility report.
 | Backup before the first thermal-input profile save | `.before-thermal-inputs.json` beside the profile file; kept for returning to an older version |
 | Watt-cap ownership and recovery | Per-adapter `power-cap-<id>.txt` under `%LOCALAPPDATA%\mVolt+`; separate from profiles |
 | RTSS visibility | A `.rtss` file beside the per-GPU profile file |
-| BIOS-override recovery | `%PROGRAMDATA%\mVolt+\NativeLimits`; keep this while using BIOS override |
+| BIOS-override recovery | `%PROGRAMDATA%\mVolt+\NativeLimits`, or `Data\mVolt+\NativeLimits` in portable mode; keep this while using BIOS override |
 | Startup/profile logs | Size-limited logs under `%LOCALAPPDATA%\mVolt+` |
 | Clock and boost-reason histories | Recent readings kept while the app runs; cleared on exit |
 | Installed startup executable | Per-user/per-adapter directory under `%ProgramFiles%\mVolt+` |
@@ -2047,6 +2137,20 @@ curves. `--diagnostic` creates a local compatibility report.
 
 Monitoring history is not saved to disk. Keep or remove reports and copied
 backups as needed. Reports are not uploaded automatically.
+
+**Portable mode.** An empty `portable.txt` next to `mVolt+.exe` keeps everything
+mVolt+ stores in `%LOCALAPPDATA%\mVolt+` in a `Data` folder beside it instead.
+The first start on a PC without mVolt+ data asks which you want. Adding the
+file later copies your current data into `Data` once; the two locations are not
+kept in sync. BIOS-override recovery data goes into `Data\mVolt+`, which only
+administrators can open, so copying, zipping or deleting the folder asks for
+administrator permission. On a USB stick or network drive it stays in
+`%PROGRAMDATA%\mVolt+` instead. Recovery data is not copied between the two
+locations, so remove a BIOS override before switching; otherwise mVolt+ shows it
+as not managed by mVolt+ (**Remove BIOS override** still works). The Start with Windows copy
+stays where it is. After moving a portable folder, turn **Start with Windows**
+off and on again. To remove a portable copy, use **Uninstall mVolt+** in
+**Settings → General**.
 
 The download is a single executable. Enabling **Start with Windows** installs
 the separate startup copy described above, which runs with administrator privileges.
@@ -2166,9 +2270,9 @@ See [Fan control and persistence](#fan-control-and-persistence).
 <details>
 <summary><strong>Startup is delayed or the profile does not load</strong></summary>
 
-Read the startup warning and check the profile selected for logon. Unsupported
-controls, unavailable GPU readings or an incomplete earlier attempt can prevent
-application.
+Read the startup warning and check the startup profile in **Settings →
+General**. Unsupported controls, unavailable GPU readings or an incomplete
+earlier attempt can prevent application.
 See [Startup and tray](#startup-and-tray) and [Files and logging](#files-and-logging).
 
 </details>
