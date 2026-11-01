@@ -1457,7 +1457,8 @@ hover help **Update available:** and the version.
 **Reset app preferences** restores this GPU's app preferences to fresh-install
 defaults: no Quick tuning pins, all sections expanded and tiles visible, voltage
 range sliders, default sizing/theme, **Compact** profile details, monitoring and
-advanced options. It also clears the new-profile mode choice, startup profile,
+advanced options, an empty overlay layout and no saved overlay layouts. It also
+clears the new-profile mode choice, startup profile,
 start-in-tray option and **Check for updates at startup**. Saved profiles,
 currently applied GPU settings and the accepted initial warning are kept. Use
 the dashboard's **Reset all** to reset GPU tuning instead.
@@ -1466,9 +1467,10 @@ the dashboard's **Reset all** to reset GPU tuning instead.
 override on every GPU, **Start with Windows**, the BIOS-override recovery data,
 then all profiles and settings. Fans mVolt+ controls go back to automatic. If a
 BIOS override or Start with Windows can't be removed, it stops there and keeps
-your profiles and settings. A data folder that also holds your own files, or
-that links to another place, is kept and listed. The executable stays: the last
-message names it, and **Open file location** shows it so you can delete it.
+your profiles and settings. A portable `Data` folder that also holds your own
+files, or a data folder that links to another place, is kept and listed. The
+executable stays: the last message names it, and **Open file location** shows it
+so you can delete it.
 Other settings mVolt+ applied stay on the GPU until you restart Windows. A GPU
 that isn't connected, such as an unplugged eGPU, keeps its BIOS override, so
 remove that first.
@@ -1482,7 +1484,8 @@ intervals reduce updates and also slow software fan-curve responses.
 **Pause when minimized or in tray** pauses general monitoring unless a visible
 monitoring window or overlay needs it. An active fan curve still performs its
 required temperature checks. NVML readings are collected only while Telemetry or
-Overview is open, or an overlay GPU-load or power line is selected.
+Overview is open, or an overlay GPU-load, power or limit-reasons reading is selected
+and the overlay is on or its editor is on screen.
 
 To use RTSS, run RivaTuner Statistics Server, enable **Show telemetry in the RTSS
 overlay**, and choose your readings. RTSS must also display its overlay in the
@@ -1490,20 +1493,45 @@ target application. Overlay options are off by default. Voltage labels identify
 measured readings; firmware-requested voltage is not substituted in the overlay.
 
 Choose from GPU/driver identity, the applied profile, Boost Lock, rail voltages,
-core/memory/fabric clocks, GPU/hotspot/memory temperatures, fan duty/RPM, power
-versus enforced limit, GPU load and VRAM used/total. Use the group buttons to
-find each option; the **Overlay preview** shows the selected lines. Missing or
-stale GPU readings are omitted. VRAM usage is for the whole GPU, not just the current game.
+core/memory/fabric clocks, limit reasons, GPU/hotspot/memory temperatures, fan
+duty/RPM, power versus enforced limit, GPU load and VRAM used/total. Use the
+group buttons to find each option. A missing or stale GPU reading shows `--` in
+its place, so rows don't move. VRAM usage is for the whole GPU, not just the
+current game.
 
-Drag a line in the preview to change its position in the overlay. Right-click a
-line for **Rename…**, **Label color…**, **Value color…** and **Reset**. Names
-can have up to 16 characters; an empty name restores the default. **Reset**
-restores the name and both colors. The header line takes only a color.
+**Limit reasons** names what holds the clock back: Power, Temp, REL (reliability
+voltage), OP (max operating voltage), Util, Idle or Other, or None while the
+driver reports no limit.
 
-**Compact rows** in the preview's top row groups the readings into one overlay
-row per device: PROFILE, BOOST LOCK, GPU, MEM, FAN, RAM, CPU, WIREVIEW, PSU and
-FPS. Dragging and right-clicking then act on whole rows. Lines and rows keep
-their own names and colors.
+The **overlay editor** beside the list draws the layout row by row as the overlay
+shows it. A row holds one reading or several, and readings share aligned columns
+across rows.
+
+| To | Do this |
+| --- | --- |
+| Add a reading | Tick it in the list, or drag it onto a row to join that row or between rows for a row of its own |
+| Remove a reading | Untick it, drag it back onto the list, or select it and press **Delete** |
+| Move a reading or row | Drag it, or select it and press **Alt+arrow**; the header stays first |
+| Change the spacing | Drag a gap to change that line, or **Shift**+drag it to change all lines. Double-click resets |
+| Rename a row | Double-click its name or press **F2**; up to 16 characters, and an empty name restores the default |
+| Undo or redo | **Ctrl+Z** and **Ctrl+Y**, or the buttons above the editor |
+
+Right-click a row for **Rename…**, **Hide name**, **Label color**, **Value
+color**, **Split into lines**, **Remove** and **Reset**. Right-click a reading
+for its display formats, **Warn above…**, **Own row** and **Remove**. **Warn
+above…** draws the number in red above the value you enter. The header takes
+only a color.
+
+The **Layout** menu rearranges the rows with **One per line** or **Group by
+device**, or switches to the **Gaming**, **Tuning** or **Benchmark** preset.
+**Save layout…** keeps your layout in that menu under a name. **Copy layout** and
+**Paste layout** move a layout as text, to share it or use it on another GPU.
+**Reset** empties the layout. Changes save as you make them, with this GPU's
+preferences and apart from tuning profiles. The editor shows how much of RTSS's
+4 KB of text the layout uses; rows past that are marked and left out of the
+overlay. While the overlay is off, the editor still shows GPU load, **Limit
+reasons** and the power limit; other readings that only the overlay collects show
+`--` until it is on.
 
 The **CPU** and **Memory** groups add system readings:
 
@@ -1529,7 +1557,7 @@ pin above 9.5 A turns red.
 The **Frame rate** group adds FPS, frame time, average FPS, 1% low and 0.1% low.
 RTSS supplies these values in the target application. Average FPS and the lows
 are measured during an RTSS benchmark recording, which the **Toggle RTSS
-benchmark** [hotkey](#hotkeys) starts and stops. The preview shows `--` for frame
+benchmark** [hotkey](#hotkeys) starts and stops. The editor shows `--` for frame
 statistics; their values appear in the overlay. These options do not add an FPS
 history to the Telemetry window.
 
@@ -1896,11 +1924,10 @@ restart. An older version may not read limits saved by this one.
 Keep `%PROGRAMDATA%\mVolt+\NativeLimits`, or `Data\mVolt+\NativeLimits` in
 [portable mode](#files-and-logging). Deleting it does not remove an active
 override and can lose the saved starting state. If it is missing, reopen mVolt+
-and follow the recovery action offered in this dialog; **Revert changes** can
-remove an override that no longer has recovery data. When offered, **Repair
-permissions** fixes access to that folder and checks again, keeping GPU settings
-and recovery files. If recovery still fails, keep the remaining files and
-[report the issue](https://github.com/b00nz/mVolt/issues).
+and follow the recovery action offered in this dialog; **Remove BIOS override**
+removes an override that no longer has recovery data, and still works when
+recovery data can't be saved. If recovery still fails, keep the remaining files
+and [report the issue](https://github.com/b00nz/mVolt/issues).
 
 <details>
 <summary><strong>Recovery when the NVIDIA driver cannot start</strong></summary>
@@ -1958,6 +1985,11 @@ these controls.
 Some drivers provide fewer telemetry details or cannot report exact thermal
 input values. Missing readings stay unavailable. Where supported, thermal
 Apply/Reset remains usable with [unconfirmed values clearly labelled](#thermal-inputs).
+
+A PC whose NVIDIA GPUs are all in TCC mode opens them with the same controls. A
+control the driver doesn't offer in TCC mode shows as unavailable, and BIOS
+override is unlikely to work there. A PC with both ordinary and TCC GPUs lists
+only the ordinary ones.
 
 Select the intended adapter in the header and confirm its name and identity before
 tuning. Monitoring and profiles then use that adapter. Settings applied to the
@@ -2142,12 +2174,15 @@ backups as needed. Reports are not uploaded automatically.
 mVolt+ stores in `%LOCALAPPDATA%\mVolt+` in a `Data` folder beside it instead.
 The first start on a PC without mVolt+ data asks which you want. Adding the
 file later copies your current data into `Data` once; the two locations are not
-kept in sync. BIOS-override recovery data goes into `Data\mVolt+`, which only
-administrators can open, so copying, zipping or deleting the folder asks for
-administrator permission. On a USB stick or network drive it stays in
-`%PROGRAMDATA%\mVolt+` instead. Recovery data is not copied between the two
-locations, so remove a BIOS override before switching; otherwise mVolt+ shows it
-as not managed by mVolt+ (**Remove BIOS override** still works). The Start with Windows copy
+kept in sync. BIOS-override recovery data goes into `Data\mVolt+` on any drive,
+USB sticks and network drives included. A GPU whose recovery data is already in
+`%PROGRAMDATA%\mVolt+` keeps using it there. On a write-protected drive, **Apply
+changes** and **Remove BIOS override** still work, automatic Apply stays blocked,
+and BIOS override says it can't save its recovery data. On a FAT or exFAT drive, a
+crash during a save can lose that data. Recovery
+data is not copied between the two locations, so remove a BIOS override before
+removing `portable.txt`; otherwise mVolt+ shows it as not managed by mVolt+
+(**Remove BIOS override** still works). The Start with Windows copy
 stays where it is. After moving a portable folder, turn **Start with Windows**
 off and on again. To remove a portable copy, use **Uninstall mVolt+** in
 **Settings → General**.

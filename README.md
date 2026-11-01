@@ -34,11 +34,11 @@ the currently downloadable version.
 - **Dashboard:** Standard and Minimal / Compact layouts, expandable fan and thermal rows, independent overvoltage switches and visibility, corrected sliders, memory, XBAR and SYS clock header readings, per-card Apply beside Reset and Enter-to-apply.
 - **Profiles:** normal profiles and full snapshots, saved clock locks, a redesigned selector with save, overwrite and delete actions and an active-profile dot, a header Save button, clear save previews, compact details with Load for editing or an optional classic Profile Manager, editable names and shortcuts, a startup profile menu, and the applied profile name in `--status` JSON.
 - **Telemetry:** expanded GPU and memory temperatures, firmware-reported Vrel, ASIC information with Speedo and a copyable ECID, older memory V/F model support, and per-pin 12V-2x6 connector readings from a WireView Pro II, MSI Ai1600TS / Ai1300TS power supplies or supported ASUS RTX 50 cards.
-- **RTSS overlay:** GPU readings, profile and Boost Lock state, FPS, frame time, average FPS and lows, plus CPU and RAM readings through the optional PawnIO driver, with grouped settings, reorderable lines, compact rows, renaming, custom colors and a preview.
+- **RTSS overlay:** GPU readings, limit reasons, profile and Boost Lock state, FPS, frame time, average FPS and lows, plus CPU and RAM readings through the optional PawnIO driver. A drag-and-drop editor builds your own rows with aligned columns and adjustable spacing, display formats, warning colors, renaming and hidden names, presets, and saved and shareable layouts.
 - **Shortcuts:** global profile shortcuts, Toggle Boost Lock, Toggle RTSS overlay and Toggle RTSS benchmark, including tray operation.
 - **Shunt multiplier:** correction for power and current readings, board-power Request and Runtime limits, and RTSS.
 - **Everyday use:** portable mode, clearer hover help, accessible profile menus, background saves, fully drawn menus and windows, and improved window handling across displays and scaling changes.
-- **Recovery and compatibility:** improved Apply, Reset all, limit-method switching, startup recovery and restart handling, plus broader support for older GPUs and laptop power/current controls.
+- **Recovery and compatibility:** improved Apply, Reset all, limit-method switching, startup recovery and restart handling, plus broader support for older GPUs, GPUs in TCC mode and laptop power/current controls.
 
 [Release notes](https://github.com/b00nz/mVolt/releases) · [Get a BIOS copy](docs/guide.md#bios-copy)
 
@@ -152,12 +152,13 @@ ECID and each rail's firmware-reported Vrel and offset.
 
 RivaTuner Statistics Server is optional and only needed for its on-screen
 overlay. Choose the readings in **Settings → Monitoring**, including the applied
-profile, Boost Lock, clocks, temperatures, fan duty/RPM, power versus limit,
-GPU load, VRAM usage and frame statistics. Average FPS, 1% low and 0.1% low use
-RTSS benchmark recording, which **Toggle RTSS benchmark** starts and stops. Grouped
-settings and an overlay preview help arrange the readings; drag a preview line to
-reorder it and right-click it to rename it or change its colors. **Compact rows**
-groups the readings into rows.
+profile, Boost Lock, clocks, limit reasons, temperatures, fan duty/RPM, power versus
+limit, GPU load, VRAM usage and frame statistics. Average FPS, 1% low and 0.1% low
+use RTSS benchmark recording, which **Toggle RTSS benchmark** starts and stops. The
+overlay editor arranges them: drag readings into your own rows, drag a gap to set
+that line's spacing or **Shift**+drag it for all lines, and right-click for names,
+colors, formats and warnings. The **Layout** menu holds presets, your saved layouts
+and Copy / Paste.
 
 CPU clock, temperature and power, and DDR5 RAM temperature, need the free
 [PawnIO](https://pawnio.eu) driver, which you install separately. Other CPU and
